@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const Products = () => {
-  // Banner images
   const bannerImages = [
     {
       img: "/abot.png",
@@ -23,8 +22,6 @@ const Products = () => {
 
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-
-  // Auto-rotate banners
   useEffect(() => {
     const interval = setInterval(() => {
       setIsTransitioning(true);
@@ -35,8 +32,6 @@ const Products = () => {
     }, 6000);
     return () => clearInterval(interval);
   }, [bannerImages.length]);
-
-  // Product categories data
   const productCategories = [
     {
       id: 1,
@@ -117,8 +112,6 @@ const Products = () => {
       link: "/products/screw-compressors"
     }
   ];
-
-  // Featured products
   const featuredProducts = [
     {
       id: "ecovsd-75hp",
@@ -150,8 +143,7 @@ const Products = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Banner Section */}
-      <div className="relative h-[500px] overflow-hidden bg-gray-900 mt-1">
+      <div className="relative h-[600px] overflow-hidden bg-gray-900 mt-1">
         {bannerImages.map((banner, index) => (
           <div
             key={index}
@@ -163,7 +155,7 @@ const Products = () => {
               <img
                 src={banner.img}
                 alt={banner.title}
-                className="w-full h-full object-cover"
+                className="w-full h-[600px] opacity-100"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
             </div>
@@ -178,8 +170,6 @@ const Products = () => {
             </div>
           </div>
         ))}
-        
-        {/* Banner Indicators */}
         <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-3 z-10">
           {bannerImages.map((_, index) => (
             <button
@@ -199,8 +189,6 @@ const Products = () => {
           ))}
         </div>
       </div>
-
-      {/* Product Categories Section */}
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
@@ -247,7 +235,7 @@ const Products = () => {
 
                   <Link
                     to={category.link}
-                    className="inline-flex items-center justify-center w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300"
+                    className="inline-flex items-center justify-center w-full bg-gradient-to-r from-[#4682c4] to-[#3face2] hover:from-blue-700 hover:to-cyan-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300"
                   >
                     View Products
                     <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

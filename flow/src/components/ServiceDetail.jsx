@@ -15,7 +15,7 @@ const ServiceDetail = () => {
         "Initial system testing and calibration",
         "Operator training"
       ],
-      image: "/abot.png",
+      image: "/native.webp",
       benefits: [
         "Optimal system performance from day one",
         "Reduced risk of installation errors",
@@ -41,7 +41,7 @@ const ServiceDetail = () => {
         "Energy efficiency maintained"
       ]
     },
-    // Add other services similarly...
+    
   };
 
   const service = services[serviceId];

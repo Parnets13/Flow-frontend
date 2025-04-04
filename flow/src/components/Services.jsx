@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const ServicesPage = () => {
-  // Simplified banner images
   const bannerImages = [
     {
       img: "/abot.png",
@@ -10,8 +9,6 @@ const ServicesPage = () => {
       subtitle: "Keeping your systems running at peak performance"
     }
   ];
-
-  // Simplified services data
   const services = [
     {
       id: 'installation',
@@ -78,13 +75,12 @@ const ServicesPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Simplified Banner Section */}
-      <div className="relative h-96 overflow-hidden bg-gray-800 mt-1">
-        <div className="absolute inset-0">
+      <div className="relative h-[600px] overflow-hidden bg-gray-800 mt-1 ">
+      <div className="absolute inset-0">
           <img
             src={bannerImages[0].img}
             alt={bannerImages[0].title}
-            className="w-full h-full object-cover opacity-70"
+            className="w-full h-[600px] opacity-100"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
         </div>
@@ -100,7 +96,6 @@ const ServicesPage = () => {
           </div>
         </div>
       </div>
-      {/* Simplified Services Section */}
       <section className="py-16 mt-1">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
@@ -135,8 +130,6 @@ const ServicesPage = () => {
           </div>
         </div>
       </section>
-
-      {/* Benefits Section */}
       <section className="py-16 bg-gray-100">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">

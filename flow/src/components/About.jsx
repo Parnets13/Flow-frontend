@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const AboutPage = () => {
-  // Banner images data
   const bannerImages = [
     {
       img: "/about.png",
@@ -23,8 +22,6 @@ const AboutPage = () => {
 
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-
-  // Auto-rotate banners
   useEffect(() => {
     const interval = setInterval(() => {
       setIsTransitioning(true);
@@ -38,8 +35,7 @@ const AboutPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Banner Section */}
-      <div className="relative h-[500px] overflow-hidden bg-gray-900 mt-1">
+      <div className="relative h-[600px] overflow-hidden bg-gray-900 mt-1">
         {bannerImages.map((banner, index) => (
           <div
             key={index}
@@ -51,7 +47,7 @@ const AboutPage = () => {
               <img
                 src={banner.img}
                 alt={banner.title}
-                className="w-full h-full object-cover"
+                className="w-full h-[600px] opacity-100"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
             </div>
@@ -66,8 +62,6 @@ const AboutPage = () => {
             </div>
           </div>
         ))}
-        
-        {/* Banner Indicators */}
         <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-3 z-10">
           {bannerImages.map((_, index) => (
             <button
@@ -87,8 +81,6 @@ const AboutPage = () => {
           ))}
         </div>
       </div>
-
-      {/* Company Overview */}
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -107,7 +99,7 @@ const AboutPage = () => {
               </p>
               <Link
                 to="/contact"
-                className="inline-flex items-center bg-[#4682c4] hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300"
+                className="inline-flex items-center bg-[#4682c4] hover:bg-[#3face2] text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300"
               >
                 Contact Our Team
               </Link>
@@ -124,8 +116,6 @@ const AboutPage = () => {
           </div>
         </div>
       </section>
-
-      {/* Mission and Values */}
       <section className="py-20 bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">

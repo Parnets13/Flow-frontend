@@ -16,6 +16,16 @@ import Orders from "./admin/pages/Orders";
 import ProductsAdmin from "./admin/pages/Products";
 import Settings from "./admin/pages/Settings";
 import Banner from "./admin/pages/Banner";
+import Industrial  from "./admin/pages/Industrial"
+import Industry from "./admin/pages/Industry"
+import Specifications from "./admin/pages/Specifications"
+import Testimonials from "./admin/pages/Testimonials"
+import OurStory from "./admin/pages/OurStory";
+import Ourcore from "./admin/pages/ourcore";
+import Ourfacility from "./admin/pages/ourfacility";
+import Ourteam from "./admin/pages/ourteam";
+import Productscategories from "./admin/pages/Productscategories"
+import AddNewProduct from "./admin/pages/AddNewProduct"
 function App() {
   return (
     <Router>
@@ -49,6 +59,18 @@ function App() {
             <Route path="orders" element={<Orders />} />
             <Route path="products" element={<ProductsAdmin />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="industrial" element={<Industrial/>}/>
+            <Route path="industry" element={<Industry/>}/>
+            <Route path="specifications" element={<Specifications/>}/>
+            <Route path="testimonials" element={<Testimonials/>}/>
+            <Route path="our Story" element={<OurStory/>}/>
+            <Route path="our core" element={<Ourcore/>}/>
+            <Route path="our facility" element={<Ourfacility/>}/>
+            <Route path="our team" element={<Ourteam/>}/>
+            <Route path="addNewProduct" element={<AddNewProduct/>}/>
+            
+            <Route path="productscategories" element={<Productscategories/>}/>
+            
           </Route>
         </Routes>
       </div>

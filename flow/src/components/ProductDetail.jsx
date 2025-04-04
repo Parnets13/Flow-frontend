@@ -495,7 +495,7 @@ const ProductDetail = () => {
               <div className="flex space-x-4 mb-8">
                 <button 
                   onClick={() => setShowQuoteForm(true)}
-                  className="flex-1 bg-[#4682c4] hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300"
+                  className="flex-1 bg-[#4682c4] hover:bg-[#3face2] text-white font-semibold py-3 px-6 rounded-lg transition duration-300"
                 >
                   Request Quote
                 </button>

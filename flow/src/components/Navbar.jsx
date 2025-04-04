@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom"; 
 import { FaPhoneAlt, FaEnvelope, FaSearch } from "react-icons/fa";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { MdClose } from "react-icons/md";
@@ -8,8 +8,17 @@ const Navbar = () => {
   const [active, setActive] = useState("Home");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation(); 
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const activeItem = navItems.find(item => item.path === currentPath);
+    if (activeItem) {
+      setActive(activeItem.name);
+    } else if (currentPath.startsWith("/products")) {
+      setActive("Products");
+    }
+  }, [location]);
 
-  // Change navbar style on scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -29,7 +38,6 @@ const Navbar = () => {
 
   return (
     <>
-      {/* Top Contact Bar - Dark Blue */}
       <div className="bg-[#4682c4] text-white text-sm py-2 px-6 hidden md:block">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-6">
@@ -48,8 +56,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-
-      {/* Main Navbar */}
       <nav 
         className={`sticky top-0 z-50 transition-all duration-300 bg-white shadow-md ${
           isScrolled ? "py-2" : "py-4"
@@ -57,12 +63,10 @@ const Navbar = () => {
       >
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between">
-            {/* Logo */}
+
             <Link to="/" className="flex items-center">
               <img src="/logo.jpg" alt="Flow Air Logo" className="h-10 w-auto" />
             </Link>
-
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
               {navItems.map((item) => (
                 <Link
@@ -79,8 +83,6 @@ const Navbar = () => {
                 </Link>
               ))}
             </div>
-
-            {/* Search and CTA */}
             <div className="hidden md:flex items-center space-x-4">
               <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
@@ -97,8 +99,6 @@ const Navbar = () => {
                 Get Quote
               </Link>
             </div>
-
-            {/* Mobile Menu Button */}
             <button
               className="md:hidden text-[#4682c4] focus:outline-none"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -112,7 +112,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden bg-white px-6 py-4 shadow-lg">
             <div className="flex flex-col space-y-2">

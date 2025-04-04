@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
-// SVG Icon Components (Enhanced with more industrial feel)
 const CheckCircle = () => (
   <svg 
     className="h-6 w-6 text-blue-500 mr-3 flex-shrink-0" 
@@ -37,7 +35,6 @@ const BoltIcon = () => (
 );
 
 const HomePage = () => {
-  // Features list
   const features = [
     "10-480 HP Range Available",
     "Energy Efficient Models (Up to 35% savings)",
@@ -46,8 +43,6 @@ const HomePage = () => {
     "Customizable Solutions",
     "5-Year Comprehensive Warranty"
   ];
-
-  // Banner images data
   const bannerImages = [
     {
       img: "/abot.png",
@@ -75,7 +70,6 @@ const HomePage = () => {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Auto-rotate banners with smoother transition
   useEffect(() => {
     const interval = setInterval(() => {
       setIsTransitioning(true);
@@ -89,7 +83,6 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      {/* Hero Banner Section - More industrial aesthetic */}
       <div className="relative h-screen max-h-[600px] overflow-hidden bg-gray-900 mt-1">
         {bannerImages.map((banner, index) => (
           <div
@@ -102,7 +95,8 @@ const HomePage = () => {
               <img
                 src={banner.img}
                 alt={banner.title}
-                className="object-cover w-full h-full"
+                // className="object-cover w-full h-full"
+                className="w-full h-[600px] opacity-100"
                 style={{ objectPosition: 'center' }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent"></div>
@@ -130,7 +124,7 @@ const HomePage = () => {
                 <div>
                   <Link
                     to={banner.link}
-                    className="group inline-flex items-center bg-[#4682c4] hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+                    className="group inline-flex items-center bg-[#4682c4] hover:bg-[#3face2] text-white font-semibold px-8 py-4 rounded-lg transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
                   >
                     {banner.cta}
                     <ArrowRight />
@@ -140,8 +134,6 @@ const HomePage = () => {
             </div>
           </div>
         ))}
-        
-        {/* Banner Indicators - More visible */}
         <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-3 z-10">
           {bannerImages.map((_, index) => (
             <button
@@ -160,8 +152,6 @@ const HomePage = () => {
             />
           ))}
         </div>
-        
-        {/* Scroll indicator - More prominent */}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
           <div className="w-10 h-10 border-2 border-white/80 rounded-full flex items-center justify-center">
             <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,8 +160,6 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-
-      {/* Main Content Section - More industrial color scheme */}
       <div className="container mx-auto px-4 relative z-10 py-20 -mt-20">
         <div className="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
@@ -205,8 +193,7 @@ const HomePage = () => {
               <div className="flex flex-wrap gap-4">
                 <Link
                   to="/products"
-                  className="group inline-flex items-center bg-gradient-to-r from-[#4682c4] to-cyan-600 hover:from-[#4682c4] hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-4 rounded-lg font-medium transform hover:-translate-y-1"
-                >
+                  className="group inline-flex items-center bg-[#4682c4] hover:bg-[#3face2] text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-4 rounded-lg font-medium transform hover:-translate-y-1">
                   Explore Product Line
                   <ArrowRight />
                 </Link>
@@ -220,11 +207,9 @@ const HomePage = () => {
             </div>
 
             <div className="relative overflow-hidden bg-gray-900">
-              {/* Decorative elements */}
+
               <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl"></div>
-
-              {/* Main image with effects */}
               <div className="relative h-full min-h-[500px]">
                 <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-cyan-800/20 mix-blend-overlay"></div>
                 <img
@@ -232,8 +217,6 @@ const HomePage = () => {
                   alt="Industrial Air Compressor"
                   className="w-full h-full object-cover object-center"
                 />
-
-                {/* Floating badge */}
                 <div className="absolute top-8 right-8 bg-white/95 backdrop-blur-sm shadow-xl rounded-lg px-5 py-3 text-sm font-medium text-gray-900 flex items-center border border-gray-200">
                   <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -245,8 +228,6 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-
-      {/* Why Choose Us Section - More technical */}
       <section className="py-20 bg-gray-50 border-t border-b border-gray-200">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -315,8 +296,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
-      {/* Technical Specifications Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -376,8 +355,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
-      {/* Testimonials - More professional */}
       <section className="py-20 bg-[#4682c4] text-white">
   <div className="container mx-auto px-6">
     <div className="text-center max-w-3xl mx-auto mb-16">
@@ -390,7 +367,6 @@ const HomePage = () => {
     </div>
     
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* Testimonial 1 */}
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20 hover:border-blue-300 transition-colors duration-300">
         <div className="flex items-center mb-6">
           <div className="flex items-center mr-4">
@@ -410,13 +386,11 @@ const HomePage = () => {
             <img src="/abot.png" alt="Client" className="w-full h-full object-cover" />
           </div>
           <div>
-            <div className="font-semibold">Michael Johnson</div>
+            <div className="font-semibold text-gray-700">Michael Johnson</div>
             <div className="text-sm text-blue-100">Plant Director, Global Auto Co.</div>
           </div>
         </div>
       </div>
-      
-      {/* Testimonial 2 */}
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20 hover:border-blue-300 transition-colors duration-300">
         <div className="flex items-center mb-6">
           <div className="flex items-center mr-4">
@@ -436,13 +410,12 @@ const HomePage = () => {
             <img src="/abot.png" alt="Client" className="w-full h-full object-cover" />
           </div>
           <div>
-            <div className="font-semibold">Sarah Chen</div>
+            <div className="font-semibold text-gray-700">Sarah Chen</div>
             <div className="text-sm text-blue-100">Operations Manager, Premier Foods</div>
           </div>
         </div>
       </div>
-      
-      {/* Testimonial 3 */}
+
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20 hover:border-blue-300 transition-colors duration-300">
         <div className="flex items-center mb-6">
           <div className="flex items-center mr-4">
@@ -459,10 +432,10 @@ const HomePage = () => {
         </p>
         <div className="flex items-center">
           <div className="w-12 h-12 rounded-full bg-white/10 mr-4 overflow-hidden flex-shrink-0">
-            <img src="/abob.png" alt="Client" className="w-full h-full object-cover" />
+            <img src="/about.png" alt="Client" className="w-full h-full object-cover" />
           </div>
           <div>
-            <div className="font-semibold">Dr. Robert Zhang</div>
+            <div className="font-semibold text-gray-700">Dr. Robert Zhang</div>
             <div className="text-sm text-blue-100">Chief Engineer, BioPharm Inc.</div>
           </div>
         </div>
