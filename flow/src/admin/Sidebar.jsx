@@ -35,8 +35,8 @@ const Sidebar = () => {
         icon:<FiUsers className='mr-3'/>,
         submenu: [
             { name: "Industrial", path: "/admin/Industrial" },
-            { name: "Industry", path: "/admin/Industry" },
-            { name: "Specifications", path: "/admin/Specifications" }
+            // { name: "Industry", path: "/admin/Industry" },
+            // { name: "Specifications", path: "/admin/Specifications" }
           ]
 
     },
@@ -52,7 +52,7 @@ const Sidebar = () => {
         icon:<FiUsers className='mr-3'/>,
         submenu: [
             { name: "Our Story", path: "/admin/Our Story" },
-            { name: "Our Core ", path: "/admin/our core " },
+            // { name: "Our Core ", path: "/admin/our core " },
             { name: "Our Facility", path: "/admin/our facility" },
             { name: "Our Team", path: "/admin/our team" }
           ]
@@ -75,7 +75,7 @@ const Sidebar = () => {
       icon: <FiShoppingCart className="mr-3" />,
       submenu: [
         { name: "All Orders", path: "/admin/orders" },
-        { name: "Processing", path: "/admin/orders/processing" },
+        // { name: "Processing", path: "/admin/orders/processing" },
       ]
     },
   ];

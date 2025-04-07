@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
 const CheckCircle = () => (
   <svg 
     className="h-6 w-6 text-blue-500 mr-3 flex-shrink-0" 
@@ -43,115 +45,154 @@ const HomePage = () => {
     "Customizable Solutions",
     "5-Year Comprehensive Warranty"
   ];
-  const bannerImages = [
-    {
-      img: "/abot.png",
-      title: "Industrial-Grade Screw Compressors",
-      subtitle: "Precision engineered for maximum efficiency and durability",
-      link: "/products",
-      cta: "View Product Line"
-    },
-    {
-      img: "/about.png",
-      title: "Heavy Duty Compressor Systems",
-      subtitle: "Built for continuous operation in demanding environments",
-      link: "/products",
-      cta: "Explore Specifications"
-    },
-    {
-      img: "/abot.png",
-      title: "Tailored Compressor Solutions",
-      subtitle: "Custom configurations for your specific industrial needs",
-      link: "/services",
-      cta: "Request Consultation"
-    }
-  ];
 
+  const [banners, setBanners] = useState([]);
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setCurrentBanner((prev) => (prev + 1) % bannerImages.length);
-        setIsTransitioning(false);
-      }, 500);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [bannerImages.length]);
+    const fetchBanners = async () => {
+      try {
+        const response = await axios.get("http://localhost:5001/api/banner");
+        setBanners(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch banners:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchBanners();
+  }, []);
+
+  useEffect(() => {
+    if (banners.length > 0) {
+      const interval = setInterval(() => {
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setCurrentBanner((prev) => (prev + 1) % banners.length);
+          setIsTransitioning(false);
+        }, 500);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [banners.length]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p>Loading banners...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      {/* Banner Section */}
       <div className="relative h-screen max-h-[600px] overflow-hidden bg-gray-900 mt-1">
-        {bannerImages.map((banner, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${
-              index === currentBanner && !isTransitioning ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img
-                src={banner.img}
-                alt={banner.title}
-                // className="object-cover w-full h-full"
-                className="w-full h-[600px] opacity-100"
-                style={{ objectPosition: 'center' }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent"></div>
+        {banners.length > 0 ? (
+          banners.map((banner, index) => (
+            <div 
+              key={banner._id}
+              className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${
+                index === currentBanner && !isTransitioning ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <img
+                  src={`http://localhost:5001/${banner.image}`}
+                  alt={banner.title}
+                  className="object-fill w-full h-[600px] opacity-100"
+                  style={{ objectPosition: 'center' }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent"></div>
+              </div>
+              
+              <div className="container mx-auto px-6 text-white relative z-10">
+                <div className="max-w-2xl">
+                  <div className="mb-6">
+                    <span className="inline-block bg-[#4682c4] text-white px-4 py-2 rounded-full text-sm font-medium mb-4">
+                      INDUSTRIAL SOLUTIONS
+                    </span>
+                  </div>
+                  <h1 
+                    className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
+                    style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
+                  >
+                    {banner.title || "Industrial Compressor Solutions"}
+                  </h1>
+                  <p 
+                    className="text-xl md:text-2xl mb-8 text-gray-300 font-medium"
+                    style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                  >
+                    {banner.description || "Premium quality compressors for industrial applications"}
+                  </p>
+                  <div>
+                    <Link
+                      to="/products"
+                      className="group inline-flex items-center bg-[#4682c4] hover:bg-[#3face2] text-white font-semibold px-8 py-4 rounded-lg transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+                    >
+                      View Products
+                      <ArrowRight />
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
-            
+          ))
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="container mx-auto px-6 text-white relative z-10">
               <div className="max-w-2xl">
-                <div className="mb-6">
-                  <span className="inline-block bg-[#4682c4] text-white px-4 py-2 rounded-full text-sm font-medium mb-4">
-                    INDUSTRIAL SOLUTIONS
-                  </span>
-                </div>
                 <h1 
                   className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
                   style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
                 >
-                  {banner.title}
+                  Industrial Compressor Solutions
                 </h1>
                 <p 
                   className="text-xl md:text-2xl mb-8 text-gray-300 font-medium"
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
                 >
-                  {banner.subtitle}
+                  Premium quality compressors for industrial applications
                 </p>
-                <div>
-                  <Link
-                    to={banner.link}
-                    className="group inline-flex items-center bg-[#4682c4] hover:bg-[#3face2] text-white font-semibold px-8 py-4 rounded-lg transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
-                  >
-                    {banner.cta}
-                    <ArrowRight />
-                  </Link>
-                </div>
+                <Link
+                  to="/products"
+                  className="group inline-flex items-center bg-[#4682c4] hover:bg-[#3face2] text-white font-semibold px-8 py-4 rounded-lg transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+                >
+                  View Products
+                  <ArrowRight />
+                </Link>
               </div>
             </div>
           </div>
-        ))}
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-3 z-10">
-          {bannerImages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setIsTransitioning(true);
-                setTimeout(() => {
-                  setCurrentBanner(index);
-                  setIsTransitioning(false);
-                }, 500);
-              }}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentBanner ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/70'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
+        )}
+        
+        {banners.length > 0 && (
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-3 z-10">
+            {banners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setIsTransitioning(true);
+                  setTimeout(() => {
+                    setCurrentBanner(index);
+                    setIsTransitioning(false);
+                  }, 500);
+                }}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index === currentBanner ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/70'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
+        
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
           <div className="w-10 h-10 border-2 border-white/80 rounded-full flex items-center justify-center">
             <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,6 +201,8 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Rest of your home page content remains the same */}
       <div className="container mx-auto px-4 relative z-10 py-20 -mt-20">
         <div className="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
@@ -197,17 +240,10 @@ const HomePage = () => {
                   Explore Product Line
                   <ArrowRight />
                 </Link>
-                {/* <Link
-                  to="/contact"
-                  className="inline-flex items-center border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-gray-700 hover:text-blue-700 px-8 py-4 rounded-lg font-medium transition-all duration-300"
-                >
-                  Contact Engineering Team
-                </Link> */}
               </div>
             </div>
 
             <div className="relative overflow-hidden bg-gray-900">
-
               <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl"></div>
               <div className="relative h-full min-h-[500px]">

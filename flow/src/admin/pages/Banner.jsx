@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Alert = ({ message, type, onClose }) => {
   const alertClasses = {
@@ -21,20 +22,8 @@ const Alert = ({ message, type, onClose }) => {
 };
 
 const MainBanner = () => {
-  const [banners, setBanners] = useState([
-    {
-      _id: "1",
-      image: "banner1.jpg",
-      title: "Banner 1 Title",
-      description: "Description for banner 1"
-    },
-    {
-      _id: "2",
-      image: "banner2.jpg",
-      title: "Banner 2 Title",
-      description: "Description for banner 2"
-    }
-  ]);
+  const [banners, setBanners] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -49,6 +38,23 @@ const MainBanner = () => {
   
   // Alert state
   const [alerts, setAlerts] = useState([]);
+  
+  const API_URL = "http://localhost:5001/api/banner";
+  
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+  
+  const fetchBanners = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setBanners(response.data);
+      setLoading(false);
+    } catch (error) {
+      showAlert("Failed to fetch banners", "error");
+      setLoading(false);
+    }
+  };
   
   const showAlert = (message, type = 'success') => {
     const newAlert = { id: Date.now(), message, type };
@@ -86,40 +92,50 @@ const MainBanner = () => {
     setImagePreview(newPreviews);
   };
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (imagePreview.length === 0) {
       showAlert("Please upload at least one image", "warning");
       return;
     }
     
-    if (editBannerId) {
-      setBanners(banners.map(banner => 
-        banner._id === editBannerId ? {
-          ...banner,
-          image: imagePreview[0],
-          title,
-          description
-        } : banner
-      ));
-      showAlert("Banner updated successfully!");
-    } else {
-      const newBanner = {
-        _id: Date.now().toString(),
-        image: imagePreview[0],
-        title,
-        description
-      };
-      setBanners([...banners, newBanner]);
-      showAlert("Banner added successfully!");
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('image', uploadedImages[0]);
+      
+      if (editBannerId) {
+        await axios.put(`${API_URL}/${editBannerId}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        showAlert("Banner updated successfully!");
+      } else {
+        await axios.post(API_URL, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        showAlert("Banner added successfully!");
+      }
+      
+      setShowModal(false);
+      resetForm();
+      fetchBanners();
+    } catch (error) {
+      showAlert(error.response?.data?.error || "Something went wrong", "error");
     }
-    
-    setShowModal(false);
-    resetForm();
   };
   
-  const deleteBanner = (id) => {
-    setBanners(banners.filter(banner => banner._id !== id));
-    showAlert("Banner deleted successfully!");
+  const deleteBanner = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      showAlert("Banner deleted successfully!");
+      fetchBanners();
+    } catch (error) {
+      showAlert(error.response?.data?.error || "Failed to delete banner", "error");
+    }
   };
   
   const resetForm = () => {
@@ -146,8 +162,12 @@ const MainBanner = () => {
     setShowModal(true);
   };
   
+  if (loading) {
+    return <div className="text-center py-8">Loading banners...</div>;
+  }
+  
   return (
-    <div className="mt-4 ">
+    <div className="mt-4">
       {alerts.length > 0 && (
         <div className="fixed top-5 right-5 z-50 w-72">
           {alerts.map(alert => (
@@ -189,7 +209,7 @@ const MainBanner = () => {
                     <tr key={item._id}>
                       <td className="p-3 border-t border-gray-200 text-center">
                         <img 
-                          src={item.image} 
+                          src={`http://localhost:5001/${item.image}`} 
                           alt="Banner" 
                           className="w-24 h-20 object-cover border border-gray-200 rounded" 
                         />
@@ -257,7 +277,7 @@ const MainBanner = () => {
                       {imagePreview.map((preview, index) => (
                         <div key={index} className="w-40 relative border border-gray-200 rounded overflow-hidden">
                           <img 
-                            src={preview} 
+                            src={preview.startsWith('blob:') ? preview : `http://localhost:5001/${preview}`}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-24 object-cover"
                           />
@@ -282,7 +302,6 @@ const MainBanner = () => {
                           id="bannerImageInput" 
                           accept="image/*" 
                           onChange={handleFileChange} 
-                          multiple
                           className="hidden" 
                         />
                       </div>
