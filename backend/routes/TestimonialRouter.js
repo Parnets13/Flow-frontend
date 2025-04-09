@@ -7,7 +7,6 @@ import {
     deleteTestimonial
 } from '../controllers/TestimonialController.js';
 import upload from '../middleware/upload.js';
-
 const router = express.Router();
 
 // CRUD Routes for Testimonial

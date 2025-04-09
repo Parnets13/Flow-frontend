@@ -5,14 +5,13 @@ import path from 'path';
 // Create Testimonial
 export const createTestimonial = async (req, res) => {
     try {
-        const { name, designation, rating, feedback } = req.body;
+        const { name, designation, feedback } = req.body;
         if (!req.file) {
             return res.status(400).json({ error: 'Image is required' });
         }
         const testimonial = new Testimonial({
             name,
             designation,
-            rating,
             feedback,
             image: req.file.path
         });
@@ -49,8 +48,8 @@ export const getTestimonial = async (req, res) => {
 // Update Testimonial
 export const updateTestimonial = async (req, res) => {
     try {
-        const { name, designation, rating, feedback } = req.body;
-        const updates = { name, designation, rating, feedback };
+        const { name, designation, feedback } = req.body;
+        const updates = { name, designation, feedback };
         if (req.file) {
             // Delete old image if new one is uploaded
             const testimonial = await Testimonial.findById(req.params.id);

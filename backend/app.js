@@ -9,6 +9,13 @@ import { connectDb } from './config/db.js';
 import bannerRouter from './routes/BannerRouter.js';
 import industrialRouter from "./routes/IndustrialRouter.js" 
 import testimonialRouter from './routes/TestimonialRouter.js';
+import storyRouter from './routes/StoryRouter.js';
+
+import facilitiesRouter from './routes/FacilitiesRouter.js';
+import ourTeamRouter from './routes/OurTeamRouter.js';
+import categoryRouter from './routes/CategoryRouter.js';
+import productRouter from './routes/ProductRoutes.js'; 
+import serviceRouter from './routes/ServiceRouter.js'; 
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +34,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/banner', bannerRouter);
 app.use('/api/industrial',industrialRouter);
 app.use('/api/testimonial', testimonialRouter);
+app.use('/api/story', storyRouter);
+app.use('/api/facilities', facilitiesRouter);
+app.use('/api/our-team', ourTeamRouter);
+app.use('/api/category', categoryRouter);
+app.use('/api/product', productRouter);
+app.use('/api/service', serviceRouter);
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Test route

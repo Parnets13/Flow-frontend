@@ -1,7 +1,5 @@
 import multer from 'multer';
 import path from 'path';
-
-// Set storage engine
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
         cb(null, 'uploads/');
@@ -11,13 +9,9 @@ const storage = multer.diskStorage({
     }
 });
 
-// Check file type
 function checkFileType(file, cb) {
-    // Allowed extensions
     const filetypes = /jpeg|jpg|png|gif/;
-    // Check extension
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    // Check mime type
     const mimetype = filetypes.test(file.mimetype);
 
     if (mimetype && extname) {
@@ -27,10 +21,9 @@ function checkFileType(file, cb) {
     }
 }
 
-// Init upload
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10000000 }, // 10MB limit
+    limits: { fileSize: 10000000 }, 
     fileFilter: function(req, file, cb) {
         checkFileType(file, cb);
     }
