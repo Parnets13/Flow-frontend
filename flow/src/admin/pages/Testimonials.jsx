@@ -36,12 +36,12 @@ const Testimonials = () => {
   const [name, setName] = useState("");
   const [designation, setDesignation] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [star, setStar] = useState("");
   
   // Alert state
   const [alerts, setAlerts] = useState([]);
   
   const API_URL = "http://localhost:5001/api/Testimonial";
+  const BASE_URL = "http://localhost:5001"; // Added base URL for image paths
   
   useEffect(() => {
     fetchTestimonials();
@@ -100,7 +100,7 @@ const Testimonials = () => {
       return;
     }
     
-    if (!name || !feedback || !star) {
+    if (!name || !feedback) {
       showAlert("Please fill all required fields", "warning");
       return;
     }
@@ -110,16 +110,16 @@ const Testimonials = () => {
       formData.append('name', name);
       formData.append('designation', designation);
       formData.append('feedback', feedback);
-      formData.append('star', star);
       
-      // Append all uploaded images
-      uploadedImages.forEach((file, index) => {
+      // Append all uploaded images (only new files, not preview URLs)
+      uploadedImages.forEach((file) => {
         formData.append('image', file);
       });
       
+      let response;
       if (editTestimonialId) {
         // Update existing testimonial
-        await axios.put(`${API_URL}/${editTestimonialId}`, formData, {
+        response = await axios.put(`${API_URL}/${editTestimonialId}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -127,7 +127,7 @@ const Testimonials = () => {
         showAlert("Testimonial updated successfully!");
       } else {
         // Create new testimonial
-        await axios.post(API_URL, formData, {
+        response = await axios.post(API_URL, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -164,7 +164,6 @@ const Testimonials = () => {
     setName("");
     setDesignation("");
     setFeedback("");
-    setStar("");
     setIsEditMode(false);
     setEditTestimonialId(null);
   };
@@ -176,26 +175,23 @@ const Testimonials = () => {
   
   const editForm = (item) => {
     setEditTestimonialId(item._id);
-    setImagePreview([item.image]);
-    setUploadedImages([]);
     setName(item.name || "");
     setDesignation(item.designation || "");
     setFeedback(item.feedback || "");
-    setStar(item.star || "");
+    
+    // Handle image preview for existing testimonials
+    if (item.image) {
+      const fullImagePath = item.image.startsWith('http') ? item.image : `${BASE_URL}/${item.image}`;
+      setImagePreview([fullImagePath]);
+    } else {
+      setImagePreview([]);
+    }
+    
+    // Clear any uploaded files when editing
+    setUploadedImages([]);
+    
     setIsEditMode(true);
     setShowModal(true);
-  };
-  
-  const renderStars = (rating) => {
-    const stars = [];
-    for (let i = 0; i < 5; i++) {
-      stars.push(
-        <span key={i} className={i < rating ? "text-yellow-400" : "text-gray-300"}>
-          ★
-        </span>
-      );
-    }
-    return stars;
   };
   
   return (
@@ -237,7 +233,6 @@ const Testimonials = () => {
                     <th className="p-3 border-b-2 border-gray-200 text-center">Name</th>
                     <th className="p-3 border-b-2 border-gray-200 text-center">Designation</th>
                     <th className="p-3 border-b-2 border-gray-200 text-center">Feedback</th>
-                    <th className="p-3 border-b-2 border-gray-200 text-center">Rating</th>
                     <th className="p-3 border-b-2 border-gray-200 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -246,16 +241,16 @@ const Testimonials = () => {
                     testimonials.map((item) => (
                       <tr key={item._id}>
                         <td className="p-3 border-t border-gray-200 text-center">
-  <img 
-    src={item.image.startsWith('http') ? item.image : `${API_URL.replace('/api/Testimonial', '')}/${item.image}`}
-    alt="Person" 
-    className="w-16 h-16 object-cover rounded-full border border-gray-200 mx-auto" 
-    onError={(e) => {
-      e.target.onerror = null; 
-      e.target.src = 'https://via.placeholder.com/100';
-    }}
-  />
-</td>
+                          <img 
+                            src={item.image.startsWith('http') ? item.image : `${BASE_URL}/${item.image}`}
+                            alt="Person" 
+                            className="w-16 h-16 object-cover rounded-full border border-gray-200 mx-auto" 
+                            onError={(e) => {
+                              e.target.onerror = null; 
+                              e.target.src = 'https://via.placeholder.com/100';
+                            }}
+                          />
+                        </td>
                         <td className="p-3 border-t border-gray-200 text-center">
                           <div className="font-medium">
                             {item.name || <span className="text-gray-400 italic">No name</span>}
@@ -269,11 +264,6 @@ const Testimonials = () => {
                         <td className="p-3 border-t border-gray-200">
                           <div className="max-w-xs text-sm">
                             {item.feedback || <span className="text-gray-400 italic">No feedback</span>}
-                          </div>
-                        </td>
-                        <td className="p-3 border-t border-gray-200 text-center">
-                          <div className="flex justify-center">
-                            {renderStars(parseInt(item.star))}
                           </div>
                         </td>
                         <td className="p-3 border-t border-gray-200 text-center">
@@ -298,7 +288,7 @@ const Testimonials = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6" className="p-8 text-center border-t border-gray-200">
+                      <td colSpan="5" className="p-8 text-center border-t border-gray-200">
                         No testimonials found
                       </td>
                     </tr>
@@ -333,7 +323,7 @@ const Testimonials = () => {
                       {imagePreview.map((preview, index) => (
                         <div key={index} className="w-40 relative border border-gray-200 rounded overflow-hidden">
                           <img 
-                            src={preview.startsWith('blob:') ? preview : `http://localhost:5001/${preview}`}
+                            src={preview}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-24 object-cover"
                           />
@@ -405,24 +395,6 @@ const Testimonials = () => {
                       disabled={loading}
                     ></textarea>
                   </div>
-                  
-                  <div className="mb-4">
-                    <h5 className="text-lg font-medium mb-2">Rating*</h5>
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((rating) => (
-                        <button
-                          key={rating}
-                          type="button"
-                          onClick={() => !loading && setStar(rating.toString())}
-                          className={`text-2xl ${rating <= star ? "text-yellow-400" : "text-gray-300"}`}
-                          disabled={loading}
-                        >
-                          ★
-                        </button>
-                      ))}
-                      <span className="ml-2 text-gray-600">{star}/5</span>
-                    </div>
-                  </div>
                 </div>
               </form>
             </div>
@@ -436,8 +408,8 @@ const Testimonials = () => {
               </button>
               <button 
                 onClick={handleSubmit}
-                disabled={loading || imagePreview.length === 0 || !name || !feedback || !star}
-                className={`cursor-pointer py-2 px-3 rounded border-transparent inline-flex items-center gap-2 bg-blue-600 text-white ${(loading || imagePreview.length === 0 || !name || !feedback || !star) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                disabled={loading || imagePreview.length === 0 || !name || !feedback}
+                className={`cursor-pointer py-2 px-3 rounded border-transparent inline-flex items-center gap-2 bg-blue-600 text-white ${(loading || imagePreview.length === 0 || !name || !feedback) ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 {loading ? "Processing..." : (isEditMode ? "Update" : "Save")}
               </button>

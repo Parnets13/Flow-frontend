@@ -13,15 +13,17 @@ const AddNewProduct = () => {
     categoryId: "",
     name: "",
     description: "",
-    image: "",
+    image: null,
     price: "",
     fullDescription: "",
     specs: [{ key: "", value: "" }],
     features: [""],
-    images: [""]
+    images: []
   });
 
   const [alerts, setAlerts] = useState([]);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [previewImages, setPreviewImages] = useState([]);
 
   const showAlert = (message, type = 'success') => {
     const newAlert = { id: Date.now(), message, type };
@@ -37,6 +39,57 @@ const AddNewProduct = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleMainImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        image: file
+      }));
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAdditionalImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const newImages = [...formData.images, ...files];
+      setFormData(prev => ({
+        ...prev,
+        images: newImages
+      }));
+      
+      // Create previews
+      const readers = files.map(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewImages(prev => [...prev, reader.result]);
+        };
+        reader.readAsDataURL(file);
+        return reader;
+      });
+    }
+  };
+
+  const removeAdditionalImage = (index) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData(prev => ({
+      ...prev,
+      images: newImages
+    }));
+    
+    const newPreviews = [...previewImages];
+    newPreviews.splice(index, 1);
+    setPreviewImages(newPreviews);
   };
 
   const handleSpecChange = (index, field, value) => {
@@ -87,50 +140,17 @@ const AddNewProduct = () => {
     }));
   };
 
-  const handleImageChange = (index, value) => {
-    const newImages = [...formData.images];
-    newImages[index] = value;
-    setFormData(prev => ({
-      ...prev,
-      images: newImages
-    }));
-  };
-
-  const addImage = () => {
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ""]
-    }));
-  };
-
-  const removeImage = (index) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
-    setFormData(prev => ({
-      ...prev,
-      images: newImages
-    }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Filter out empty specs, features, and images
-    const filteredSpecs = formData.specs
-      .filter(spec => spec.key.trim() && spec.value.trim())
-      .reduce((obj, spec) => {
-        obj[spec.key] = spec.value;
-        return obj;
-      }, {});
-
-    const filteredFeatures = formData.features.filter(f => f.trim());
-    const filteredImages = formData.images.filter(img => img.trim());
-
-    // Here you would typically send the data to your backend API
-    console.log("Submitting product:", {
+    // In a real application, you would upload the images to a server here
+    // and then submit the form data with the image URLs you get back
+    
+    // For demonstration, we'll just log the form data
+    console.log("Form data to submit:", {
       ...formData,
-      specs: filteredSpecs,
-      features: filteredFeatures,
-      images: filteredImages
+      image: formData.image ? formData.image.name : null,
+      images: formData.images.map(img => img.name)
     });
 
     showAlert("Product added successfully!");
@@ -190,17 +210,19 @@ const AddNewProduct = () => {
             </div>
 
             <div>
-              <label className="block text-gray-700 mb-1">Main Image URL*</label>
+              <label className="block text-gray-700 mb-1">Main Image*</label>
               <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
+                type="file"
+                accept="image/*"
+                onChange={handleMainImageChange}
                 className="w-full p-2 border rounded"
                 required
               />
-              {formData.image && (
-                <img src={formData.image} alt="Preview" className="mt-2 h-32 object-contain"/>
+              {previewImage && (
+                <div className="mt-2">
+                  <img src={previewImage} alt="Preview" className="h-32 object-contain"/>
+                  <p className="text-sm text-gray-500 mt-1">{formData.image?.name}</p>
+                </div>
               )}
             </div>
           </div>
@@ -306,36 +328,31 @@ const AddNewProduct = () => {
         {/* Additional Images */}
         <div className="mt-6">
           <h2 className="text-lg font-semibold border-b pb-2 mb-4">Additional Images</h2>
-          {formData.images.map((image, index) => (
-            <div key={index} className="mb-4">
-              <div className="flex items-center mb-1">
-                <input
-                  type="text"
-                  value={image}
-                  onChange={(e) => handleImageChange(index, e.target.value)}
-                  className="flex-1 p-2 border rounded"
-                  placeholder="Image URL"
-                />
+          <div className="mb-4">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAdditionalImagesChange}
+              className="w-full p-2 border rounded"
+              multiple
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {previewImages.map((image, index) => (
+              <div key={index} className="relative border p-2 rounded">
+                <img src={image} alt={`Preview ${index}`} className="h-32 w-full object-contain"/>
+                <p className="text-xs truncate mt-1">{formData.images[index]?.name}</p>
                 <button
                   type="button"
-                  onClick={() => removeImage(index)}
-                  className="ml-2 text-red-600 px-2"
+                  onClick={() => removeAdditionalImage(index)}
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                 >
                   ×
                 </button>
               </div>
-              {image && (
-                <img src={image} alt={`Preview ${index}`} className="h-32 object-contain"/>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addImage}
-            className="text-blue-600 text-sm mt-2"
-          >
-            + Add Image
-          </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex justify-end space-x-4 mt-8">

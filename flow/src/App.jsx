@@ -26,6 +26,7 @@ import Ourfacility from "./admin/pages/ourfacility";
 import Ourteam from "./admin/pages/ourteam";
 import Productscategories from "./admin/pages/Productscategories"
 import AddNewProduct from "./admin/pages/AddNewProduct"
+
 function App() {
   return (
     <Router>
@@ -68,6 +69,7 @@ function App() {
             <Route path="our facility" element={<Ourfacility/>}/>
             <Route path="our team" element={<Ourteam/>}/>
             <Route path="addNewProduct" element={<AddNewProduct/>}/>
+            {/* <Route path="categorycontext" element={<CategoryContext/>}/> */}
             
             <Route path="productscategories" element={<Productscategories/>}/>
             

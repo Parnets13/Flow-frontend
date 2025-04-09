@@ -1,56 +1,36 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 const ServicesPage = () => {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const API_BASE_URL = "http://localhost:5001/api/service";
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(API_BASE_URL);
+        setServices(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching services:", err);
+        setError("Failed to load services. Please try again later.");
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
   const bannerImages = [
     {
       img: "/abot.png",
       title: "Expert Air Compressor Services",
       subtitle: "Keeping your systems running at peak performance"
-    }
-  ];
-  const services = [
-    {
-      id: 'installation',
-      name: "Installation",
-      description: "Professional setup of your air compressor system",
-      icon: "🔧",
-      link: "/services/installation"
-    },
-    {
-      id: 'maintenance',
-      name: "Maintenance",
-      description: "Regular care to prevent breakdowns",
-      icon: "🛠️",
-      link: "/services/maintenance"
-    },
-    {
-      id: 3,
-      name: "Emergency Repairs",
-      description: "24/7 support to minimize downtime",
-      icon: "🚨",
-      link: "/services/repairs"
-    },
-    {
-      id: 4,
-      name: "Energy Audits",
-      description: "Optimize your system's efficiency",
-      icon: "📊",
-      link: "/services/energy-audits"
-    },
-    {
-      id: 5,
-      name: "Upgrades",
-      description: "Modernize your existing systems",
-      icon: "⚡",
-      link: "/services/upgrades"
-    },
-    {
-      id: 6,
-      name: "Custom Solutions",
-      description: "Tailored for your specific needs",
-      icon: "🎯",
-      link: "/services/custom-solutions"
     }
   ];
 
@@ -76,7 +56,7 @@ const ServicesPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="relative h-[600px] overflow-hidden bg-gray-800 mt-1 ">
-      <div className="absolute inset-0">
+        <div className="absolute inset-0">
           <img
             src={bannerImages[0].img}
             alt={bannerImages[0].title}
@@ -107,27 +87,47 @@ const ServicesPage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service) => (
-              <div 
-                key={service.id}
-                className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition duration-300 border border-gray-100"
-              >
-                <div className="text-4xl mb-4">{service.icon}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{service.name}</h3>
-                <p className="text-gray-600 mb-4">{service.description}</p>
-                <Link
-                  to={service.link}
-                  className="inline-flex items-center text-[#4682c4] font-medium hover:underline"
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-xl text-gray-600">Loading services...</div>
+            </div>
+          ) : error ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-xl text-red-600">{error}</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {services.length > 0 ? services.map((service) => (
+                <div 
+                  key={service._id}
+                  className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition duration-300 border border-gray-100"
                 >
-                  Learn more
-                  <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-            ))}
-          </div>
+                  <div className="mb-4 h-48 overflow-hidden">
+                    <img 
+                      src={`http://localhost:5001/uploads/${service.image}`}
+                      alt={service.title}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{service.title}</h3>
+                  <p className="text-gray-600 mb-4">{service.description}</p>
+                  <Link
+                    to={`/services/${service._id}`}
+                    className="inline-flex items-center text-[#4682c4] font-medium hover:underline"
+                  >
+                    Learn more
+                    <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              )) : (
+                <div className="col-span-3 text-center py-8">
+                  No services available at the moment.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
       <section className="py-16 bg-gray-100">
@@ -148,7 +148,6 @@ const ServicesPage = () => {
           </div>
         </div>
       </section>
-
     </div>
   );
 };

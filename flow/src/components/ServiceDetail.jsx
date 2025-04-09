@@ -1,56 +1,54 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
 
 const ServiceDetail = () => {
   const { serviceId } = useParams();
+  const [service, setService] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [relatedServices, setRelatedServices] = useState([]);
 
-  // Mock service data - in a real app you'd fetch this from an API
-  const services = {
-    'installation': {
-      title: "Professional Installation",
-      description: "Expert setup of your air compressor system",
-      details: [
-        "Site assessment and planning",
-        "Proper equipment sizing",
-        "Professional installation by certified technicians",
-        "Initial system testing and calibration",
-        "Operator training"
-      ],
-      image: "/native.webp",
-      benefits: [
-        "Optimal system performance from day one",
-        "Reduced risk of installation errors",
-        "Extended equipment lifespan",
-        "Warranty protection"
-      ]
-    },
-    'maintenance': {
-      title: "Preventive Maintenance",
-      description: "Regular care to prevent breakdowns and extend equipment life",
-      details: [
-        "Scheduled maintenance visits",
-        "Complete system inspection",
-        "Lubrication and filter changes",
-        "Belt tension adjustments",
-        "Performance testing"
-      ],
-      image: "/about.png",
-      benefits: [
-        "Reduced unexpected downtime",
-        "Lower repair costs over time",
-        "Consistent air quality",
-        "Energy efficiency maintained"
-      ]
-    },
-    
-  };
+  const API_BASE_URL = "http://localhost:5001/api/service";
 
-  const service = services[serviceId];
+  useEffect(() => {
+    const fetchServiceDetail = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_BASE_URL}/${serviceId}`);
+        setService(response.data);
+        
+        // Fetch related services (all services except the current one)
+        const allServicesResponse = await axios.get(API_BASE_URL);
+        const otherServices = allServicesResponse.data.filter(s => s._id !== serviceId);
+        // Take just 3 related services or less if there aren't 3
+        setRelatedServices(otherServices.slice(0, 3));
+        
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching service details:", err);
+        setError("Failed to load service details. Please try again later.");
+        setLoading(false);
+      }
+    };
 
-  if (!service) {
+    fetchServiceDetail();
+  }, [serviceId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-gray-600">Loading service details...</div>
+      </div>
+    );
+  }
+
+  if (error || !service) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-4">Service Not Found</h1>
+          <p className="text-lg text-red-600 mb-8">{error}</p>
           <Link 
             to="/services" 
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -61,6 +59,14 @@ const ServiceDetail = () => {
       </div>
     );
   }
+
+  // Function to format service details into bullet points
+  const formatServiceDetails = (details) => {
+    // Split the details by line breaks or periods to create bullet points
+    return details.split(/[.\n]+/).filter(item => item.trim().length > 0);
+  };
+
+  const detailPoints = formatServiceDetails(service.details);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -88,7 +94,7 @@ const ServiceDetail = () => {
                 <svg className="w-3 h-3 text-gray-400 mx-1" fill="none" stroke="currentColor" viewBox="0 0 6 10">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 9 4-4-4-4"/>
                 </svg>
-                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 capitalize">
+                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2">
                   {service.title}
                 </span>
               </div>
@@ -112,7 +118,7 @@ const ServiceDetail = () => {
             {/* Service Image */}
             <div className="h-96 bg-gray-100 flex items-center justify-center p-8">
               <img 
-                src={service.image} 
+                src={`http://localhost:5001/uploads/${service.image}`}
                 alt={service.title}
                 className="h-full w-full object-contain"
               />
@@ -122,22 +128,34 @@ const ServiceDetail = () => {
             <div className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Service Details</h2>
               
-              <ul className="space-y-4 mb-8">
-                {service.details.map((detail, index) => (
-                  <li key={index} className="flex items-start">
-                    <svg className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-gray-700">{detail}</span>
-                  </li>
+              {/* Modified: Service Details now has green checkmarks like Key Benefits */}
+              <div className="mb-8 space-y-4">
+                {detailPoints.map((point, index) => (
+                  <div key={index} className="flex items-start">
+                    <div className="flex-shrink-0 mt-1">
+                      <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-gray-700">{point}</p>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
 
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Key Benefits</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {service.benefits.map((benefit, index) => (
-                  <div key={index} className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-blue-800">{benefit}</p>
+              <div className="space-y-4 mb-8">
+                {service.benefits && service.benefits.map((benefit, index) => (
+                  <div key={index} className="flex items-start">
+                    <div className="flex-shrink-0 mt-1">
+                      <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-gray-700">{benefit}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -161,25 +179,38 @@ const ServiceDetail = () => {
         </div>
 
         {/* Related Services */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">Other Services</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* You would map through related services here */}
-            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Maintenance Plans</h3>
-              <p className="text-gray-600 mb-4">Keep your system running smoothly with our maintenance packages</p>
-              <Link
-                to="/services/maintenance"
-                className="inline-flex items-center text-[#4682c4] font-medium hover:underline"
-              >
-                Learn more
-                <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+        {relatedServices.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">Other Services</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedServices.map((relatedService) => (
+                <div 
+                  key={relatedService._id}
+                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 border border-gray-100"
+                >
+                  <div className="mb-4 h-40 overflow-hidden">
+                    <img 
+                      src={`http://localhost:5001/uploads/${relatedService.image}`}
+                      alt={relatedService.title}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{relatedService.title}</h3>
+                  <p className="text-gray-600 mb-4">{relatedService.description}</p>
+                  <Link
+                    to={`/services/${relatedService._id}`}
+                    className="inline-flex items-center text-[#4682c4] font-medium hover:underline"
+                  >
+                    Learn more
+                    <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Alert = ({ message, type, onClose }) => {
   const alertClasses = {
@@ -21,31 +22,20 @@ const Alert = ({ message, type, onClose }) => {
 };
 
 const OurTeam = () => {
-  const [teamMembers, setTeamMembers] = useState([
-    {
-      _id: "1",
-      image: "team1.jpg",
-      name: "John Doe",
-      position: "CEO",
-      description: "Founder and CEO of the company with 10+ years of experience"
-    },
-  ]);
-  
-  // Modal states
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editMemberId, setEditMemberId] = useState(null);
-  
-  // Form states
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const [imagePreview, setImagePreview] = useState([]);
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [name, setName] = useState("");
   const [position, setPosition] = useState("");
   const [description, setDescription] = useState("");
-  
-  // Alert state
   const [alerts, setAlerts] = useState([]);
   
+  const API_URL = "http://localhost:5001/api/our-team";
+
   const showAlert = (message, type = 'success') => {
     const newAlert = { id: Date.now(), message, type };
     setAlerts([...alerts, newAlert]);
@@ -54,36 +44,39 @@ const OurTeam = () => {
       setAlerts(alerts.filter(alert => alert.id !== newAlert.id));
     }, 3000);
   };
-  
+
+  const fetchTeamMembers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(API_URL);
+      setTeamMembers(response.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+      showAlert("Failed to fetch team members", "error");
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeamMembers();
+  }, []);
+
   const handleFileChange = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const file = e.target.files[0];
+    if (!file) return;
     
-    const newUploadedImages = [...uploadedImages];
-    const newImagePreviews = [...imagePreview];
-    
-    Array.from(files).forEach(file => {
-      const fileUrl = URL.createObjectURL(file);
-      newUploadedImages.push(file);
-      newImagePreviews.push(fileUrl);
-    });
-    
-    setUploadedImages(newUploadedImages);
-    setImagePreview(newImagePreviews);
-    e.target.value = null;
+    setUploadedImage(file);
+    setImagePreview(URL.createObjectURL(file));
   };
-  
-  const removeImage = (index) => {
-    const newImages = [...uploadedImages];
-    const newPreviews = [...imagePreview];
-    newImages.splice(index, 1);
-    newPreviews.splice(index, 1);
-    setUploadedImages(newImages);
-    setImagePreview(newPreviews);
+
+  const removeImage = () => {
+    setUploadedImage(null);
+    setImagePreview(null);
   };
-  
-  const handleSubmit = () => {
-    if (imagePreview.length === 0) {
+
+  const handleSubmit = async () => {
+    if (!imagePreview && !isEditMode) {
       showAlert("Please upload an image", "warning");
       return;
     }
@@ -93,64 +86,77 @@ const OurTeam = () => {
       return;
     }
     
-    if (editMemberId) {
-      setTeamMembers(teamMembers.map(member => 
-        member._id === editMemberId ? {
-          ...member,
-          image: imagePreview[0],
-          name,
-          position,
-          description
-        } : member
-      ));
-      showAlert("Team member updated successfully!");
-    } else {
-      const newMember = {
-        _id: Date.now().toString(),
-        image: imagePreview[0],
-        name,
-        position,
-        description
-      };
-      setTeamMembers([...teamMembers, newMember]);
-      showAlert("Team member added successfully!");
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("position", position);
+      formData.append("description", description);
+      if (uploadedImage) {
+        formData.append("image", uploadedImage);
+      }
+      
+      let response;
+      if (isEditMode) {
+        response = await axios.put(`${API_URL}/${editMemberId}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        showAlert("Team member updated successfully!");
+      } else {
+        response = await axios.post(API_URL, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        showAlert("Team member added successfully!");
+      }
+      
+      setShowModal(false);
+      resetForm();
+      fetchTeamMembers();
+    } catch (error) {
+      console.error("Error saving team member:", error);
+      showAlert(error.response?.data?.error || "Failed to save team member", "error");
     }
-    
-    setShowModal(false);
-    resetForm();
   };
-  
-  const deleteMember = (id) => {
-    setTeamMembers(teamMembers.filter(member => member._id !== id));
-    showAlert("Team member deleted successfully!");
+
+  const deleteMember = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      showAlert("Team member deleted successfully!");
+      fetchTeamMembers();
+    } catch (error) {
+      console.error("Error deleting team member:", error);
+      showAlert(error.response?.data?.error || "Failed to delete team member", "error");
+    }
   };
-  
+
   const resetForm = () => {
-    setUploadedImages([]);
-    setImagePreview([]);
+    setUploadedImage(null);
+    setImagePreview(null);
     setName("");
     setPosition("");
     setDescription("");
     setIsEditMode(false);
     setEditMemberId(null);
   };
-  
+
   const openAddModal = () => {
     resetForm();
     setShowModal(true);
   };
-  
-  const editForm = (item) => {
-    setEditMemberId(item._id);
-    setImagePreview([item.image]);
-    setUploadedImages([]);
-    setName(item.name || "");
-    setPosition(item.position || "");
-    setDescription(item.description || "");
+
+  const editForm = (member) => {
+    setEditMemberId(member._id);
+    setImagePreview(member.image ? `/uploads/${member.image}` : null);
+    setName(member.name || "");
+    setPosition(member.position || "");
+    setDescription(member.description || "");
     setIsEditMode(true);
     setShowModal(true);
   };
-  
+
   return (
     <div className="mt-4">
       {alerts.length > 0 && (
@@ -178,71 +184,85 @@ const OurTeam = () => {
         </div>
         
         <div className="p-4">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Image</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Name</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Position</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Description</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {teamMembers.length > 0 ? (
-                  teamMembers.map((item) => (
-                    <tr key={item._id}>
-                      <td className="p-3 border-t border-gray-200 text-center">
-                        <img 
-                          src={item.image} 
-                          alt="Team Member" 
-                          className="w-16 h-16 object-cover rounded-full border border-gray-200 mx-auto" 
-                        />
-                      </td>
-                      <td className="p-3 border-t border-gray-200 text-center">
-                        <div className="font-medium">
-                          {item.name || <span className="text-gray-400 italic">No name</span>}
-                        </div>
-                      </td>
-                      <td className="p-3 border-t border-gray-200 text-center">
-                        <div className="text-sm">
-                          {item.position || <span className="text-gray-400 italic">No position</span>}
-                        </div>
-                      </td>
-                      <td className="p-3 border-t border-gray-200">
-                        <div className="max-w-xs text-sm">
-                          {item.description || <span className="text-gray-400 italic">No description</span>}
-                        </div>
-                      </td>
-                      <td className="p-3 border-t border-gray-200 text-center">
-                        <div className="flex justify-center gap-2">
-                          <button 
-                            onClick={() => editForm(item)} 
-                            className="cursor-pointer py-1 px-2 rounded border border-yellow-400 text-yellow-500 hover:bg-yellow-50"
-                          >
-                            ✏️
-                          </button>
-                          <button 
-                            onClick={() => deleteMember(item._id)} 
-                            className="cursor-pointer py-1 px-2 rounded border border-red-500 text-red-500 hover:bg-red-50"
-                          >
-                            🗑️
-                          </button>
-                        </div>
+          {isLoading ? (
+            <div className="text-center py-8">Loading team members...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Image</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Name</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Position</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Description</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamMembers.length > 0 ? (
+                    teamMembers.map((item) => (
+                      <tr key={item._id}>
+                        <td className="p-3 border-t border-gray-200 text-center">
+                          {item.image ? (
+                            <img 
+                            src={`http://localhost:5001/uploads/${item.image}`}
+                              alt="Team Member" 
+                              className="w-16 h-16 object-cover rounded-full border border-gray-200 mx-auto"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/placeholder-user.jpg';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded-full bg-gray-200 mx-auto flex items-center justify-center">
+                              <span className="text-gray-500">No Image</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3 border-t border-gray-200 text-center">
+                          <div className="font-medium">
+                            {item.name || <span className="text-gray-400 italic">No name</span>}
+                          </div>
+                        </td>
+                        <td className="p-3 border-t border-gray-200 text-center">
+                          <div className="text-sm">
+                            {item.position || <span className="text-gray-400 italic">No position</span>}
+                          </div>
+                        </td>
+                        <td className="p-3 border-t border-gray-200">
+                          <div className="max-w-xs text-sm">
+                            {item.description || <span className="text-gray-400 italic">No description</span>}
+                          </div>
+                        </td>
+                        <td className="p-3 border-t border-gray-200 text-center">
+                          <div className="flex justify-center gap-2">
+                            <button 
+                              onClick={() => editForm(item)} 
+                              className="cursor-pointer py-1 px-2 rounded border border-yellow-400 text-yellow-500 hover:bg-yellow-50"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              onClick={() => deleteMember(item._id)} 
+                              className="cursor-pointer py-1 px-2 rounded border border-red-500 text-red-500 hover:bg-red-50"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="p-8 text-center border-t border-gray-200">
+                        No team members found
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="p-8 text-center border-t border-gray-200">
-                      No team members found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
       
@@ -265,22 +285,22 @@ const OurTeam = () => {
                   <div className="mb-4">
                     <h5 className="text-lg font-medium mb-2">Image*</h5>
                     <div className="flex flex-wrap gap-4 mb-2">
-                      {imagePreview.map((preview, index) => (
-                        <div key={index} className="w-40 relative border border-gray-200 rounded overflow-hidden">
+                      {imagePreview && (
+                        <div className="w-40 relative border border-gray-200 rounded overflow-hidden">
                           <img 
-                            src={preview} 
-                            alt={`Preview ${index + 1}`}
+                            src={imagePreview} 
+                            alt="Preview"
                             className="w-full h-24 object-cover"
                           />
                           <button 
                             type="button"
-                            onClick={() => removeImage(index)}
+                            onClick={removeImage}
                             className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center border-none cursor-pointer"
                           >
                             ×
                           </button>
                         </div>
-                      ))}
+                      )}
                       
                       <div 
                         className="w-40 h-24 border border-dashed border-gray-200 rounded flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
@@ -293,11 +313,11 @@ const OurTeam = () => {
                           id="teamImageInput" 
                           accept="image/*" 
                           onChange={handleFileChange} 
-                          multiple
                           className="hidden" 
                         />
                       </div>
                     </div>
+                    <p className="text-sm text-gray-500">Only one image can be uploaded per team member</p>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -348,8 +368,8 @@ const OurTeam = () => {
               </button>
               <button 
                 onClick={handleSubmit}
-                disabled={imagePreview.length === 0 || !name || !position}
-                className={`cursor-pointer py-2 px-3 rounded border-transparent inline-flex items-center gap-2 bg-blue-600 text-white ${imagePreview.length === 0 || !name || !position ? 'opacity-60 cursor-not-allowed' : ''}`}
+                disabled={(!imagePreview && !isEditMode) || !name || !position}
+                className={`cursor-pointer py-2 px-3 rounded border-transparent inline-flex items-center gap-2 bg-blue-600 text-white ${(!imagePreview && !isEditMode) || !name || !position ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 {isEditMode ? "Update" : "Save"}
               </button>

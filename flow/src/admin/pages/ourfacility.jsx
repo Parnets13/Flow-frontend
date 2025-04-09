@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Alert = ({ message, type, onClose }) => {
   const alertClasses = {
@@ -21,15 +22,8 @@ const Alert = ({ message, type, onClose }) => {
 };
 
 const OurFacility = () => {
-  const [facilities, setFacilities] = useState([
-    {
-      _id: "1",
-      image: "facility1.jpg",
-      title: "Modern Equipment",
-      description: "State-of-the-art equipment for all your needs",
-      features: ["Advanced technology", "High efficiency", "Easy maintenance"]
-    },
-  ]);
+  const [facilities, setFacilities] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -37,8 +31,8 @@ const OurFacility = () => {
   const [editFacilityId, setEditFacilityId] = useState(null);
   
   // Form states
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const [imagePreview, setImagePreview] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [featureInput, setFeatureInput] = useState("");
@@ -46,6 +40,24 @@ const OurFacility = () => {
   
   // Alert state
   const [alerts, setAlerts] = useState([]);
+  
+  const API_URL = "http://localhost:5001/api/facilities";
+  
+  // Fetch all facilities
+  const fetchFacilities = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setFacilities(response.data);
+      setLoading(false);
+    } catch (error) {
+      showAlert("Failed to fetch facilities", "error");
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    fetchFacilities();
+  }, []);
   
   const showAlert = (message, type = 'success') => {
     const newAlert = { id: Date.now(), message, type };
@@ -57,30 +69,17 @@ const OurFacility = () => {
   };
   
   const handleFileChange = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const file = e.target.files[0];
+    if (!file) return;
     
-    const newUploadedImages = [...uploadedImages];
-    const newImagePreviews = [...imagePreview];
+    setSelectedImage(file);
     
-    Array.from(files).forEach(file => {
-      const fileUrl = URL.createObjectURL(file);
-      newUploadedImages.push(file);
-      newImagePreviews.push(fileUrl);
-    });
-    
-    setUploadedImages(newUploadedImages);
-    setImagePreview(newImagePreviews);
-    e.target.value = null;
-  };
-  
-  const removeImage = (index) => {
-    const newImages = [...uploadedImages];
-    const newPreviews = [...imagePreview];
-    newImages.splice(index, 1);
-    newPreviews.splice(index, 1);
-    setUploadedImages(newImages);
-    setImagePreview(newPreviews);
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
   
   const addFeature = () => {
@@ -96,9 +95,9 @@ const OurFacility = () => {
     setFeatures(newFeatures);
   };
   
-  const handleSubmit = () => {
-    if (imagePreview.length === 0) {
-      showAlert("Please upload at least one image", "warning");
+  const handleSubmit = async () => {
+    if (!selectedImage && !imagePreview) {
+      showAlert("Please upload an image", "warning");
       return;
     }
     
@@ -107,41 +106,54 @@ const OurFacility = () => {
       return;
     }
     
-    if (editFacilityId) {
-      setFacilities(facilities.map(facility => 
-        facility._id === editFacilityId ? {
-          ...facility,
-          image: imagePreview[0],
-          title,
-          description,
-          features
-        } : facility
-      ));
-      showAlert("Facility updated successfully!");
-    } else {
-      const newFacility = {
-        _id: Date.now().toString(),
-        image: imagePreview[0],
-        title,
-        description,
-        features
-      };
-      setFacilities([...facilities, newFacility]);
-      showAlert("Facility added successfully!");
+    try {
+      const formData = new FormData();
+      if (selectedImage) {
+        formData.append('image', selectedImage);
+      }
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('features', JSON.stringify(features));
+      
+      if (isEditMode) {
+        // Update existing facility
+        await axios.put(`${API_URL}/${editFacilityId}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        showAlert("Facility updated successfully!");
+      } else {
+        // Create new facility
+        await axios.post(API_URL, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        showAlert("Facility added successfully!");
+      }
+      
+      fetchFacilities(); // Refresh the list
+      setShowModal(false);
+      resetForm();
+    } catch (error) {
+      showAlert(error.response?.data?.error || "Something went wrong", "error");
     }
-    
-    setShowModal(false);
-    resetForm();
   };
   
-  const deleteFacility = (id) => {
-    setFacilities(facilities.filter(facility => facility._id !== id));
-    showAlert("Facility deleted successfully!");
+  const deleteFacility = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      showAlert("Facility deleted successfully!");
+      fetchFacilities(); // Refresh the list
+    } catch (error) {
+      showAlert(error.response?.data?.error || "Failed to delete facility", "error");
+    }
   };
   
   const resetForm = () => {
-    setUploadedImages([]);
-    setImagePreview([]);
+    setSelectedImage(null);
+    setImagePreview(null);
     setTitle("");
     setDescription("");
     setFeatures([]);
@@ -155,13 +167,13 @@ const OurFacility = () => {
     setShowModal(true);
   };
   
-  const editForm = (item) => {
-    setEditFacilityId(item._id);
-    setImagePreview([item.image]);
-    setUploadedImages([]);
-    setTitle(item.title || "");
-    setDescription(item.description || "");
-    setFeatures(item.features || []);
+  const editForm = (facility) => {
+    setEditFacilityId(facility._id);
+    setImagePreview(facility.image);
+    setSelectedImage(null);
+    setTitle(facility.title || "");
+    setDescription(facility.description || "");
+    setFeatures(facility.features || []);
     setIsEditMode(true);
     setShowModal(true);
   };
@@ -193,77 +205,81 @@ const OurFacility = () => {
         </div>
         
         <div className="p-4">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Image</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Title</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Description</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Features</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {facilities.length > 0 ? (
-                  facilities.map((item) => (
-                    <tr key={item._id}>
-                      <td className="p-3 border-t border-gray-200 text-center">
-                        <img 
-                          src={item.image} 
-                          alt="Facility" 
-                          className="w-24 h-20 object-cover border border-gray-200 rounded" 
-                        />
-                      </td>
-                      <td className="p-3 border-t border-gray-200">
-                        <div className="font-medium">
-                          {item.title || <span className="text-gray-400 italic">No title</span>}
-                        </div>
-                      </td>
-                      <td className="p-3 border-t border-gray-200">
-                        <div className="max-w-xs text-sm">
-                          {item.description || <span className="text-gray-400 italic">No description</span>}
-                        </div>
-                      </td>
-                      <td className="p-3 border-t border-gray-200">
-                        <ul className="list-disc pl-5 text-sm">
-                          {item.features && item.features.length > 0 ? (
-                            item.features.map((feature, index) => (
-                              <li key={index}>{feature}</li>
-                            ))
-                          ) : (
-                            <span className="text-gray-400 italic">No features</span>
-                          )}
-                        </ul>
-                      </td>
-                      <td className="p-3 border-t border-gray-200 text-center">
-                        <div className="flex justify-center gap-2">
-                          <button 
-                            onClick={() => editForm(item)} 
-                            className="cursor-pointer py-1 px-2 rounded border border-yellow-400 text-yellow-500 hover:bg-yellow-50"
-                          >
-                            ✏️
-                          </button>
-                          <button 
-                            onClick={() => deleteFacility(item._id)} 
-                            className="cursor-pointer py-1 px-2 rounded border border-red-500 text-red-500 hover:bg-red-50"
-                          >
-                            🗑️
-                          </button>
-                        </div>
+          {loading ? (
+            <div className="text-center py-8">Loading facilities...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Image</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Title</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Description</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Features</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {facilities.length > 0 ? (
+                    facilities.map((item) => (
+                      <tr key={item._id}>
+                        <td className="p-3 border-t border-gray-200 text-center">
+                          <img 
+                            src={`http://localhost:5001/uploads/${item.image}`} 
+                            alt="Facility" 
+                            className="w-24 h-20 object-cover border border-gray-200 rounded" 
+                          />
+                        </td>
+                        <td className="p-3 border-t border-gray-200">
+                          <div className="font-medium">
+                            {item.title || <span className="text-gray-400 italic">No title</span>}
+                          </div>
+                        </td>
+                        <td className="p-3 border-t border-gray-200">
+                          <div className="max-w-xs text-sm">
+                            {item.description || <span className="text-gray-400 italic">No description</span>}
+                          </div>
+                        </td>
+                        <td className="p-3 border-t border-gray-200">
+                          <ul className="list-disc pl-5 text-sm">
+                            {item.features && item.features.length > 0 ? (
+                              item.features.map((feature, index) => (
+                                <li key={index}>{feature}</li>
+                              ))
+                            ) : (
+                              <span className="text-gray-400 italic">No features</span>
+                            )}
+                          </ul>
+                        </td>
+                        <td className="p-3 border-t border-gray-200 text-center">
+                          <div className="flex justify-center gap-2">
+                            <button 
+                              onClick={() => editForm(item)} 
+                              className="cursor-pointer py-1 px-2 rounded border border-yellow-400 text-yellow-500 hover:bg-yellow-50"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              onClick={() => deleteFacility(item._id)} 
+                              className="cursor-pointer py-1 px-2 rounded border border-red-500 text-red-500 hover:bg-red-50"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="p-8 text-center border-t border-gray-200">
+                        No facilities found
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="p-8 text-center border-t border-gray-200">
-                      No facilities found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
       
@@ -286,38 +302,42 @@ const OurFacility = () => {
                   <div className="mb-4">
                     <h5 className="text-lg font-medium mb-2">Image*</h5>
                     <div className="flex flex-wrap gap-4 mb-2">
-                      {imagePreview.map((preview, index) => (
-                        <div key={index} className="w-40 relative border border-gray-200 rounded overflow-hidden">
+                      {imagePreview && (
+                        <div className="w-40 relative border border-gray-200 rounded overflow-hidden">
                           <img 
-                            src={preview} 
-                            alt={`Preview ${index + 1}`}
+                            src={imagePreview.startsWith('data:') ? imagePreview : `http://localhost:5001/uploads/${imagePreview}`} 
+                            alt="Preview"
                             className="w-full h-24 object-cover"
                           />
                           <button 
                             type="button"
-                            onClick={() => removeImage(index)}
+                            onClick={() => {
+                              setSelectedImage(null);
+                              setImagePreview(null);
+                            }}
                             className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center border-none cursor-pointer"
                           >
                             ×
                           </button>
                         </div>
-                      ))}
+                      )}
                       
-                      <div 
-                        className="w-40 h-24 border border-dashed border-gray-200 rounded flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
-                        onClick={() => document.getElementById('facilityImageInput').click()}
-                      >
-                        <span className="text-2xl mb-1">+</span>
-                        <span>Add Image</span>
-                        <input 
-                          type="file" 
-                          id="facilityImageInput" 
-                          accept="image/*" 
-                          onChange={handleFileChange} 
-                          multiple
-                          className="hidden" 
-                        />
-                      </div>
+                      {!imagePreview && (
+                        <div 
+                          className="w-40 h-24 border border-dashed border-gray-200 rounded flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
+                          onClick={() => document.getElementById('facilityImageInput').click()}
+                        >
+                          <span className="text-2xl mb-1">+</span>
+                          <span>Add Image</span>
+                          <input 
+                            type="file" 
+                            id="facilityImageInput" 
+                            accept="image/*" 
+                            onChange={handleFileChange} 
+                            className="hidden" 
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                   
@@ -391,8 +411,8 @@ const OurFacility = () => {
               </button>
               <button 
                 onClick={handleSubmit}
-                disabled={imagePreview.length === 0 || !title}
-                className={`cursor-pointer py-2 px-3 rounded border-transparent inline-flex items-center gap-2 bg-blue-600 text-white ${imagePreview.length === 0 || !title ? 'opacity-60 cursor-not-allowed' : ''}`}
+                disabled={!imagePreview || !title}
+                className={`cursor-pointer py-2 px-3 rounded border-transparent inline-flex items-center gap-2 bg-blue-600 text-white ${!imagePreview || !title ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 {isEditMode ? "Update" : "Save"}
               </button>

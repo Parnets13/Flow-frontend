@@ -65,7 +65,7 @@ const Sidebar = () => {
       icon: <FiBox className="mr-3" />,
       submenu: [
         { name: "All Products", path: "/admin/products" },
-        { name: "Add New", path: "/admin/AddNewProduct" },
+        // { name: "Add New", path: "/admin/AddNewProduct" },
         { name: "Categories", path: "/admin/Productscategories" }
       ]
     },

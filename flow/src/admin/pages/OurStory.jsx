@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Alert = ({ message, type, onClose }) => {
   const alertClasses = {
@@ -21,20 +22,8 @@ const Alert = ({ message, type, onClose }) => {
 };
 
 const OurStory = () => {
-  const [stories, setStories] = useState([
-    {
-      _id: "1",
-      image: "story1.jpg",
-      title: "Our Founding",
-      content: "How our company was founded in 2010 with just a small team..."
-    },
-    {
-      _id: "2",
-      image: "story2.jpg",
-      title: "Major Milestone",
-      content: "Our breakthrough innovation in 2015 that changed everything..."
-    }
-  ]);
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -42,13 +31,30 @@ const OurStory = () => {
   const [editStoryId, setEditStoryId] = useState(null);
   
   // Form states
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const [imagePreview, setImagePreview] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   
   // Alert state
   const [alerts, setAlerts] = useState([]);
+  
+  const API_URL = "http://localhost:5001/api/story";
+  
+  useEffect(() => {
+    fetchStories();
+  }, []);
+  
+  const fetchStories = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setStories(response.data);
+      setLoading(false);
+    } catch (error) {
+      showAlert("Failed to fetch stories", "error");
+      setLoading(false);
+    }
+  };
   
   const showAlert = (message, type = 'success') => {
     const newAlert = { id: Date.now(), message, type };
@@ -60,71 +66,70 @@ const OurStory = () => {
   };
   
   const handleFileChange = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const file = e.target.files[0];
+    if (!file) return;
     
-    const newUploadedImages = [...uploadedImages];
-    const newImagePreviews = [...imagePreview];
+    setSelectedFile(file);
     
-    Array.from(files).forEach(file => {
-      const fileUrl = URL.createObjectURL(file);
-      newUploadedImages.push(file);
-      newImagePreviews.push(fileUrl);
-    });
-    
-    setUploadedImages(newUploadedImages);
-    setImagePreview(newImagePreviews);
-    e.target.value = null;
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
   
-  const removeImage = (index) => {
-    const newImages = [...uploadedImages];
-    const newPreviews = [...imagePreview];
-    newImages.splice(index, 1);
-    newPreviews.splice(index, 1);
-    setUploadedImages(newImages);
-    setImagePreview(newPreviews);
-  };
-  
-  const handleSubmit = () => {
-    if (imagePreview.length === 0) {
-      showAlert("Please upload at least one image", "warning");
+  const handleSubmit = async () => {
+    if (!title || !content) {
+      showAlert("Title and content are required", "warning");
       return;
     }
     
-    if (editStoryId) {
-      setStories(stories.map(story => 
-        story._id === editStoryId ? {
-          ...story,
-          image: imagePreview[0],
-          title,
-          content
-        } : story
-      ));
-      showAlert("Story updated successfully!");
-    } else {
-      const newStory = {
-        _id: Date.now().toString(),
-        image: imagePreview[0],
-        title,
-        content
-      };
-      setStories([...stories, newStory]);
-      showAlert("Story added successfully!");
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", content);
+    if (selectedFile) {
+      formData.append("image", selectedFile);
     }
     
-    setShowModal(false);
-    resetForm();
+    try {
+      if (isEditMode) {
+        await axios.put(`${API_URL}/${editStoryId}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        showAlert("Story updated successfully!");
+      } else {
+        await axios.post(API_URL, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        showAlert("Story added successfully!");
+      }
+      
+      fetchStories();
+      setShowModal(false);
+      resetForm();
+    } catch (error) {
+      showAlert(error.response?.data?.error || "Something went wrong", "error");
+    }
   };
   
-  const deleteStory = (id) => {
-    setStories(stories.filter(story => story._id !== id));
-    showAlert("Story deleted successfully!");
+  const deleteStory = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      showAlert("Story deleted successfully!");
+      fetchStories();
+    } catch (error) {
+      showAlert("Failed to delete story", "error");
+    }
   };
   
   const resetForm = () => {
-    setUploadedImages([]);
-    setImagePreview([]);
+    setSelectedFile(null);
+    setImagePreview(null);
     setTitle("");
     setContent("");
     setIsEditMode(false);
@@ -138,8 +143,7 @@ const OurStory = () => {
   
   const editForm = (item) => {
     setEditStoryId(item._id);
-    setImagePreview([item.image]);
-    setUploadedImages([]);
+    setImagePreview(item.image);
     setTitle(item.title || "");
     setContent(item.content || "");
     setIsEditMode(true);
@@ -173,65 +177,69 @@ const OurStory = () => {
         </div>
         
         <div className="p-4">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Image</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Title</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Content</th>
-                  <th className="p-3 border-b-2 border-gray-200 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stories.length > 0 ? (
-                  stories.map((item) => (
-                    <tr key={item._id}>
-                      <td className="p-3 border-t border-gray-200 text-center">
-                        <img 
-                          src={item.image} 
-                          alt="Story" 
-                          className="w-24 h-20 object-cover border border-gray-200 rounded" 
-                        />
-                      </td>
-                      <td className="p-3 border-t border-gray-200">
-                        <div className="max-w-xs overflow-hidden text-sm font-medium">
-                          {item.title || <span className="text-gray-400 italic">No title</span>}
-                        </div>
-                      </td>
-                      <td className="p-3 border-t border-gray-200">
-                        <div className="max-w-xs overflow-hidden text-sm">
-                          {item.content || <span className="text-gray-400 italic">No content</span>}
-                        </div>
-                      </td>
-                      <td className="p-3 border-t border-gray-200 text-center">
-                        <div className="flex justify-center gap-2">
-                          <button 
-                            onClick={() => editForm(item)} 
-                            className="cursor-pointer py-1 px-2 rounded border border-yellow-400 text-yellow-500 hover:bg-yellow-50"
-                          >
-                            ✏️
-                          </button>
-                          <button 
-                            onClick={() => deleteStory(item._id)} 
-                            className="cursor-pointer py-1 px-2 rounded border border-red-500 text-red-500 hover:bg-red-50"
-                          >
-                            🗑️
-                          </button>
-                        </div>
+          {loading ? (
+            <div className="text-center py-8">Loading stories...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Image</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Title</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Content</th>
+                    <th className="p-3 border-b-2 border-gray-200 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stories.length > 0 ? (
+                    stories.map((item) => (
+                      <tr key={item._id}>
+                        <td className="p-3 border-t border-gray-200 text-center">
+                          <img 
+                            src={`http://localhost:5001/uploads/${item.image}`} 
+                            alt="Story" 
+                            className="w-24 h-20 object-cover border border-gray-200 rounded" 
+                          />
+                        </td>
+                        <td className="p-3 border-t border-gray-200">
+                          <div className="max-w-xs overflow-hidden text-sm font-medium">
+                            {item.title || <span className="text-gray-400 italic">No title</span>}
+                          </div>
+                        </td>
+                        <td className="p-3 border-t border-gray-200">
+                          <div className="max-w-xs overflow-hidden text-sm">
+                            {item.content || <span className="text-gray-400 italic">No content</span>}
+                          </div>
+                        </td>
+                        <td className="p-3 border-t border-gray-200 text-center">
+                          <div className="flex justify-center gap-2">
+                            <button 
+                              onClick={() => editForm(item)} 
+                              className="cursor-pointer py-1 px-2 rounded border border-yellow-400 text-yellow-500 hover:bg-yellow-50"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              onClick={() => deleteStory(item._id)} 
+                              className="cursor-pointer py-1 px-2 rounded border border-red-500 text-red-500 hover:bg-red-50"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="p-8 text-center border-t border-gray-200">
+                        No story sections found
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="p-8 text-center border-t border-gray-200">
-                      No story sections found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
       
@@ -254,22 +262,27 @@ const OurStory = () => {
                   <div className="mb-4">
                     <h5 className="text-lg font-medium mb-2">Image</h5>
                     <div className="flex flex-wrap gap-4 mb-2">
-                      {imagePreview.map((preview, index) => (
-                        <div key={index} className="w-40 relative border border-gray-200 rounded overflow-hidden">
+                      {imagePreview && (
+                        <div className="w-40 relative border border-gray-200 rounded overflow-hidden">
                           <img 
-                            src={preview} 
-                            alt={`Preview ${index + 1}`}
+                            src={typeof imagePreview === 'string' && !imagePreview.startsWith('http') 
+                              ? `http://localhost:5001/uploads/${imagePreview}` 
+                              : imagePreview} 
+                            alt="Preview"
                             className="w-full h-24 object-cover"
                           />
                           <button 
                             type="button"
-                            onClick={() => removeImage(index)}
+                            onClick={() => {
+                              setSelectedFile(null);
+                              setImagePreview(null);
+                            }}
                             className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center border-none cursor-pointer"
                           >
                             ×
                           </button>
                         </div>
-                      ))}
+                      )}
                       
                       <div 
                         className="w-40 h-24 border border-dashed border-gray-200 rounded flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
@@ -282,7 +295,6 @@ const OurStory = () => {
                           id="storyImageInput" 
                           accept="image/*" 
                           onChange={handleFileChange} 
-                          multiple
                           className="hidden" 
                         />
                       </div>
@@ -322,8 +334,7 @@ const OurStory = () => {
               </button>
               <button 
                 onClick={handleSubmit}
-                disabled={imagePreview.length === 0}
-                className={`cursor-pointer py-2 px-3 rounded border-transparent inline-flex items-center gap-2 bg-blue-600 text-white ${imagePreview.length === 0 ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className="cursor-pointer py-2 px-3 rounded border-transparent inline-flex items-center gap-2 bg-blue-600 text-white"
               >
                 {isEditMode ? "Update" : "Save"}
               </button>
@@ -334,5 +345,5 @@ const OurStory = () => {
     </div>
   );
 };
- 
+
 export default OurStory;
