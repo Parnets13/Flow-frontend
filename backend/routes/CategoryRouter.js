@@ -7,10 +7,16 @@ import {
   deleteCategory,
 } from '../controllers/CategoryController.js';
 import upload from '../middleware/upload.js';
+
 const router = express.Router();
-router.post('/', upload.single('image'), createCategory);
-router.get('/', getCategories);
-router.get('/:id', getCategoryById);
-router.put('/:id', upload.single('image'), updateCategory);
-router.delete('/:id', deleteCategory);
+
+router.route('/')
+  .post(upload.single('image'), createCategory)
+  .get(getCategories);
+
+router.route('/:id')
+  .get(getCategoryById)
+  .put(upload.single('image'), updateCategory)
+  .delete(deleteCategory);
+
 export default router;

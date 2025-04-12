@@ -6,15 +6,14 @@ import {
   updateProduct,
   deleteProduct,
 } from '../controllers/ProductController.js';
-import upload from '../middleware/upload.js';
+// import upload from '../middleware/upload.js';
+import { uploadProductImages } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
-
-// Routes
-router.post('/', upload.single('mainImage'), createProduct);
+router.post('/', uploadProductImages, createProduct);
 router.get('/', getProducts);
 router.get('/:id', getProductById);
-router.put('/:id', upload.single('mainImage'), updateProduct);
+router.put('/:id', uploadProductImages, updateProduct);
 router.delete('/:id', deleteProduct);
 
 export default router;

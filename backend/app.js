@@ -16,6 +16,11 @@ import ourTeamRouter from './routes/OurTeamRouter.js';
 import categoryRouter from './routes/CategoryRouter.js';
 import productRouter from './routes/ProductRoutes.js'; 
 import serviceRouter from './routes/ServiceRouter.js'; 
+import contactRouter from './routes/contactRoutes.js'; 
+import authRouter from './routes/authRoutes.js';
+
+
+
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -40,8 +45,13 @@ app.use('/api/our-team', ourTeamRouter);
 app.use('/api/category', categoryRouter);
 app.use('/api/product', productRouter);
 app.use('/api/service', serviceRouter);
+app.use('/api/contacts', contactRouter); 
+app.use('/api/auth', authRouter);
+
+
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // Test route
 app.get('/', (req, res) => {
@@ -53,6 +63,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
+
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {

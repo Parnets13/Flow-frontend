@@ -14,6 +14,16 @@ const productSchema = new mongoose.Schema(
     mainImage: {
       type: String,
     },
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+    },
+    // subcategoryId: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: 'Subcategory', // Make sure you have this model created
+    // },
+    
     specifications: [
       {
         specName: {

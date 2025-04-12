@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-
+import Admin from '../models/Admin.js';
 dotenv.config();
 
 export const connectDb = async () => {
@@ -13,6 +13,7 @@ export const connectDb = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
+    await Admin.createInitialAdmin();
     console.log('✅ MongoDB connected ho gayu hai ');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);

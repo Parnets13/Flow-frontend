@@ -15,6 +15,15 @@ const categorySchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    features: {
+      type: Array,
+      default: [],
+    },
+    subcategories: {
+      type: Array,
+      default: [],
+    },
+    
   },
   {
     timestamps: true,
