@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 const Products = () => {
   const bannerImages = [
@@ -22,7 +23,29 @@ const Products = () => {
 
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // API base URL - same as in your CategoriesAdmin
+  const API_URL = 'http://localhost:5001/api/category';
+
+  // Fetch categories from the API
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(API_URL);
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchCategories();
+    
+    // Banner rotation interval
     const interval = setInterval(() => {
       setIsTransitioning(true);
       setTimeout(() => {
@@ -30,88 +53,10 @@ const Products = () => {
         setIsTransitioning(false);
       }, 500);
     }, 6000);
+    
     return () => clearInterval(interval);
   }, [bannerImages.length]);
-  const productCategories = [
-    {
-      id: 1,
-      name: "Screw Compressors",
-      description: "High-efficiency rotary screw compressors for continuous operation",
-      features: [
-        "Oil-injected and oil-free models",
-        "15-500 HP capacity range",
-        "Energy saving designs",
-        "Low noise operation"
-      ],
-      image: "/abot.png",
-      link: "/products/screw-compressors"
-    },
-    {
-      id: 2,
-      name: "2-Stage Compressors",
-      description: "Heavy-duty compressors for higher pressure requirements",
-      features: [
-        "5-200 HP capacity range",
-        "Intercooling between stages",
-        "Durable cast iron construction",
-        "Lower operating temperatures"
-      ],
-      image: "/images.jpeg",
-      link: "/products/2-stage-compressors"
-    },
-    {
-      id: 3,
-      name: "VSD Models",
-      description: "Variable Speed Drive compressors for optimal energy usage",
-      features: [
-        "30-60% energy savings",
-        "Precise pressure control",
-        "Reduced electrical peaks",
-        "Extended component life"
-      ],
-      image: "/about.png",
-      link: "/products/vsd-models"
-    },
-    {
-      id: 4,
-      name: "Spare Parts",
-      description: "Genuine OEM parts for all major compressor brands",
-      features: [
-        "Filters and separators",
-        "Valves and gaskets",
-        "Bearings and seals",
-        "Lubricants and coolants"
-      ],
-      image: "/about.png",
-      link: "/products/spare-parts"
-    },
-    {
-      id: 5,
-      name: "Accessories",
-      description: "Complete solutions for your compressed air system",
-      features: [
-        "Air dryers and filters",
-        "Condensate management",
-        "Piping and fittings",
-        "Control systems"
-      ],
-      image: "images.jpeg",
-      link: "/products/accessories"
-    },
-    {
-      id: 1,
-      name: "Screw Compressors",
-      description: "High-efficiency rotary screw compressors for continuous operation",
-      features: [
-        "Oil-injected and oil-free models",
-        "15-500 HP capacity range",
-        "Energy saving designs",
-        "Low noise operation"
-      ],
-      image: "/abot.png",
-      link: "/products/screw-compressors"
-    }
-  ];
+
   const featuredProducts = [
     {
       id: "ecovsd-75hp",
@@ -140,6 +85,15 @@ const Products = () => {
       image: "/about.png"
     }
   ];
+
+  // Function to format features from API data
+  const formatFeatures = (category) => {
+    if (!category.features) return [];
+    
+    return category.features.map(feature => 
+      typeof feature === 'string' ? feature : feature.name
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -204,48 +158,63 @@ const Products = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {productCategories.map((category) => (
-              <div 
-                key={category.id}
-                className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
-              >
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                  />
-                </div>
+          {loading ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : categories.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-gray-600">No product categories available.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {categories.map((category) => (
+                <div 
+                  key={category._id}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
+                >
+                  <div className="relative h-56 overflow-hidden">
+                    <img
+                      src={category.image ? `http://localhost:5001/${category.image}` : '/placeholder.png'}
+                      alt={category.name}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                      onError={(e) => {
+                        e.target.src = '/placeholder.png';
+                      }}
+                    />
+                  </div>
 
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{category.name}</h3>
-                  <p className="text-gray-600 mb-4">{category.description}</p>
-                  
-                  <ul className="space-y-2 mb-6">
-                    {category.features.map((feature, index) => (
-                      <li key={index} className="flex items-start text-gray-700">
-                        <svg className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{category.name}</h3>
+                    <p className="text-gray-600 mb-4">{category.description}</p>
+                    
+                    {category.features && category.features.length > 0 && (
+                      <ul className="space-y-2 mb-6">
+                        {formatFeatures(category).slice(0, 4).map((feature, index) => (
+                          <li key={index} className="flex items-start text-gray-700">
+                            <svg className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
 
-                  <Link
-                    to={category.link}
-                    className="inline-flex items-center justify-center w-full bg-gradient-to-r from-[#4682c4] to-[#3face2] hover:from-blue-700 hover:to-cyan-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300"
-                  >
-                    View Products
-                    <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </Link>
+                    <Link
+                      to={`/products/${category._id}`}
+                      className="inline-flex items-center justify-center w-full bg-gradient-to-r from-[#4682c4] to-[#3face2] hover:from-blue-700 hover:to-cyan-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300"
+                    >
+                      View Products
+                      <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

@@ -10,7 +10,7 @@ const ServicesPage = () => {
   const API_BASE_URL = "http://localhost:5001/api/service";
 
   useEffect(() => {
-    const fetchServices = async () => {
+  const fetchServices = async () => {
       try {
         setLoading(true);
         const response = await axios.get(API_BASE_URL);

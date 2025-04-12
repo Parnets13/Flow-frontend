@@ -1,5 +1,31 @@
+import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+
+// { 
+//   _id: "1", 
+//   name: "Screw Compressors",
+//   subcategories: [
+//     { _id: "101", name: "Oil-Free Screw Compressors" },
+//     { _id: "102", name: "Oil-Injected Screw Compressors" }
+//   ]
+// },     
+// { 
+//   _id: "2", 
+//   name: "2-Stage Compressors",
+//   subcategories: [
+//     { _id: "201", name: "Standard 2-Stage" },
+//     { _id: "202", name: "High-Pressure 2-Stage" }
+//   ]
+// },
+// { 
+//   _id: "3", 
+//   name: "VSD Models",
+//   subcategories: [
+//     { _id: "301", name: "Basic VSD" },
+//     { _id: "302", name: "Advanced VSD+" }
+//   ]
+// }
 
 const ProductsAdmin = () => {
   const [searchParams] = useSearchParams();
@@ -7,34 +33,42 @@ const ProductsAdmin = () => {
   const location = useLocation();
   const categoryId = searchParams.get('category');
   const subcategoryId = searchParams.get('subcategory');
-  const [categories, setCategories] = useState([
-    { 
-      _id: "1", 
-      name: "Screw Compressors",
-      subcategories: [
-        { _id: "101", name: "Oil-Free Screw Compressors" },
-        { _id: "102", name: "Oil-Injected Screw Compressors" }
-      ]
-    },
-    { 
-      _id: "2", 
-      name: "2-Stage Compressors",
-      subcategories: [
-        { _id: "201", name: "Standard 2-Stage" },
-        { _id: "202", name: "High-Pressure 2-Stage" }
-      ]
-    },
-    { 
-      _id: "3", 
-      name: "VSD Models",
-      subcategories: [
-        { _id: "301", name: "Basic VSD" },
-        { _id: "302", name: "Advanced VSD+" }
-      ]
+  const [categories, setCategories] = useState([]);
+  const [filteredProducts, setfilteredProducts] = useState([]);
+  const API_URL = 'http://localhost:5001/api/category';
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(API_URL);
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      showAlert('Failed to fetch categories', 'error');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+  useEffect(()=>{
+    fetchCategories()
+  } , [])
+  
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // console.log("categories : " , categories)
+
+  // Fetch products on component mount and when filters change
   useEffect(() => {
+    fetchProducts();
+  }, [categoryId, subcategoryId]);
+  
+  // Handle new category added from another component
+  useEffect(() => {
+    // console.log("location.state?.newCategory : " , location.state?.newCategory)
     if (location.state?.newCategory) {
+      // console.log("location.state?.newCategory : " , location.state?.newCategory)
       setCategories(prevCategories => {
         const exists = prevCategories.some(
           cat => cat._id === location.state.newCategory._id
@@ -49,28 +83,6 @@ const ProductsAdmin = () => {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate]);
-
-  const [products, setProducts] = useState([
-    {
-      _id: "1",
-      categoryId: "1",
-      subcategoryId: "101",
-      name: "EcoVSD+ 75HP",
-      shortDescription: "Premium VSD compressor",
-      mainImage: "/abot.png",
-      price: 28500,
-      fullDescription: "Detailed description about this compressor model...",
-      specifications: [
-        { specName: "Flow Rate", specValue: "75-300 CFM" },
-        { specName: "Pressure", specValue: "100-175 PSIG" }
-      ],
-      features: [
-        { featureName: "Energy", featureValue: "Energy efficient" },
-        { featureName: "Noise", featureValue: "Quiet operation" }
-      ],
-      additionalImages: ["/image1.jpg", "/image2.jpg"]
-    }
-  ]);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -91,6 +103,138 @@ const ProductsAdmin = () => {
 
   const [previewImage, setPreviewImage] = useState(null);
   const [previewImages, setPreviewImages] = useState([]);
+  
+  // Fetch products from API
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      let url = 'http://localhost:5001/api/product';
+      
+      // Add query parameters if filters are applied
+      if (categoryId) {
+        url += `?categoryId=${categoryId}`;
+        if (subcategoryId) {
+          url += `&subcategoryId=${subcategoryId}`;
+        }
+      }
+      
+      const response = await axios.get(url);  // Using axios instead of fetch
+      
+      setProducts(response.data.data);  // Access the data property
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch products. Please try again later.');
+      console.error('Error fetching products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Create new product
+  const createProduct = async (productData) => {
+    try {
+      // Create FormData for file uploads
+      const formData = new FormData();
+      
+      // Add all product data to FormData
+      Object.keys(productData).forEach(key => {
+        if (key === 'specifications' || key === 'features') {
+          formData.append(key, JSON.stringify(productData[key]));
+        } else if (key === 'mainImage') {
+          formData.append('mainImage', productData.mainImage);
+        } else if (key === 'additionalImages') {
+          productData.additionalImages.forEach(img => {
+            if (img instanceof File) {
+              formData.append('additionalImages', img);
+            }
+          });
+        } else {
+          formData.append(key, productData[key]);
+        }
+      });
+      
+      const response = await fetch('http://localhost:5001/api/product', {
+        method: 'POST',
+        body: formData,
+        // No Content-Type header - browser will set it with boundary for FormData
+      },{
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      } 
+    ); 
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      console.error('Error creating product:', err);
+      throw err;
+    }
+  };
+
+  // Update existing product
+  const updateProduct = async (id, productData) => {
+    try {
+      // Create FormData for file uploads
+      const formData = new FormData();
+      
+      // Add all product data to FormData
+      Object.keys(productData).forEach(key => {
+        if (key === 'specifications' || key === 'features') {
+          formData.append(key, JSON.stringify(productData[key]));
+        } else if (key === 'mainImage' && productData.mainImage instanceof File) {
+          formData.append('mainImage', productData.mainImage);
+        } else if (key === 'additionalImages') {
+          productData.additionalImages.forEach(img => {
+            if (img instanceof File) {
+              formData.append('additionalImages', img);
+            }
+          });
+        } else if (key !== 'mainImage' || productData.mainImage instanceof File) {
+          // Only append mainImage if it's a file (new image)
+          formData.append(key, productData[key]);
+        }
+      });
+      
+      const response = await fetch(`http://localhost:5001/api/product/${id}`, {
+        method: 'PUT',
+        body: formData,
+        // No Content-Type header - browser will set it with boundary for FormData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      console.error('Error updating product:', err);
+      throw err;
+    }
+  };
+
+  // Delete product
+  const deleteProductFromAPI = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/product/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      throw err;
+    }
+  };
+
   useEffect(() => {
     if (formData.categoryId) {
       const category = categories.find(c => c._id === formData.categoryId);
@@ -108,6 +252,7 @@ const ProductsAdmin = () => {
       setFormData(prev => ({ ...prev, subcategoryId: "" }));
     }
   }, [formData.categoryId, categories]);
+  
 
   const showAlert = (message, type = 'success') => {
     const newAlert = { id: Date.now(), message, type };
@@ -116,6 +261,7 @@ const ProductsAdmin = () => {
       setAlerts(alerts.filter(alert => alert.id !== newAlert.id));
     }, 3000);
   };
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -220,46 +366,71 @@ const ProductsAdmin = () => {
     }));
   };
 
-  const handleAddProduct = (e) => {
+  const handleAddProduct = async (e) => {
     e.preventDefault();
-    const newProduct = {
-      ...formData,
-      _id: currentProduct ? currentProduct._id : Date.now().toString(),
-      mainImage: formData.mainImage ? URL.createObjectURL(formData.mainImage) : '',
-      additionalImages: formData.additionalImages.map(img => 
-        typeof img === 'string' ? img : URL.createObjectURL(img)
-      )
-    };
-
-    if (currentProduct) {
-      setProducts(products.map(p => p._id === currentProduct._id ? newProduct : p));
-      showAlert("Product updated successfully!");
-    } else {
-      setProducts([...products, newProduct]);
-      showAlert("Product added successfully!");
+    setLoading(true);
+    
+    try {
+      const productData = {
+        ...formData,
+        price: parseFloat(formData.price),
+      };
+      // console.log("productData : " , productData)
+      let result;
+      
+      if (currentProduct) {
+        // Update existing product
+        result = await updateProduct(currentProduct._id, productData);
+        showAlert("Product updated successfully!");
+      } else {
+        // Create new product
+        console.log("productData : " , productData)
+        result = await createProduct(productData);
+        showAlert("Product added successfully!");
+      }
+      
+      // Refresh products list
+      await fetchProducts();
+      
+      // Reset form and state
+      setShowAddForm(false);
+      setCurrentProduct(null);
+      setFormData({
+        categoryId: "",
+        subcategoryId: "",
+        name: "",
+        shortDescription: "",
+        mainImage: null,
+        price: "",
+        fullDescription: "",
+        specifications: [{ specName: "", specValue: "" }],
+        features: [{ featureName: "", featureValue: "" }],
+        additionalImages: []
+      });
+      setPreviewImage(null);
+      setPreviewImages([]);
+    } catch (err) {
+      showAlert(`Error: ${err.message}`, 'error');
+    } finally {
+      setLoading(false);
     }
-
-    setShowAddForm(false);
-    setCurrentProduct(null);
-    setFormData({
-      categoryId: "",
-      subcategoryId: "",
-      name: "",
-      shortDescription: "",
-      mainImage: null,
-      price: "",
-      fullDescription: "",
-      specifications: [{ specName: "", specValue: "" }],
-      features: [{ featureName: "", featureValue: "" }],
-      additionalImages: []
-    });
-    setPreviewImage(null);
-    setPreviewImages([]);
   };
 
-  const deleteProduct = (id) => {
-    setProducts(products.filter(p => p._id !== id));
-    showAlert("Product deleted successfully!");
+  const deleteProduct = async (id) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      setLoading(true);
+      try {
+        await deleteProductFromAPI(id);
+        showAlert("Product deleted successfully!");
+        
+        // Refresh products list
+        await fetchProducts();
+      } catch (err) {
+        showAlert(`Error deleting product: ${err.message}`, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const editProduct = (id) => {
@@ -271,15 +442,43 @@ const ProductsAdmin = () => {
         subcategoryId: product.subcategoryId || "",
         name: product.name,
         shortDescription: product.shortDescription,
-        mainImage: null,
+        mainImage: null,  // We can't edit the existing file directly
         price: product.price,
         fullDescription: product.fullDescription,
-        specifications: product.specifications,
-        features: product.features,
+        specifications: product.specifications || [],
+        features: product.features || [],
         additionalImages: []  // Reset since we can't edit existing files directly
       });
-      setPreviewImage(product.mainImage);
-      setPreviewImages(product.additionalImages);
+      
+      // Set preview images from API
+      // if (product.mainImage) {
+      //   setPreviewImage(product.mainImage.startsWith('http') 
+      //     ? product.mainImage 
+      //     : `http://localhost:5001/${product.mainImage}`);
+      // }
+      
+      // if (product.additionalImages && product.additionalImages.length > 0) {
+      //   setPreviewImages(product.additionalImages.map(img => 
+      //     img.startsWith('http') ? img : `http://localhost:5001/${img}`
+      //   ));
+      // } else {
+      //   setPreviewImages([]);
+      // }
+      <td className="py-3 px-4">
+  {product.mainImage && (
+    <img 
+      src={product.mainImage.startsWith('http') 
+        ? product.mainImage 
+        : `http://localhost:5001/uploads/${product.mainImage}`} 
+      alt={product.name} 
+      className="w-16 h-16 object-cover rounded"
+      onError={(e) => {
+        e.target.onerror = null; 
+        e.target.src = '/placeholder-image.jpg';
+      }}
+    />
+  )}
+</td>
       
       // Load subcategories for the selected category
       const category = categories.find(c => c._id === product.categoryId);
@@ -291,20 +490,10 @@ const ProductsAdmin = () => {
     }
   };
 
-  // Filter products based on selected category and subcategory
-  const filteredProducts = products.filter(product => {
-    if (categoryId && subcategoryId) {
-      return product.categoryId === categoryId && product.subcategoryId === subcategoryId;
-    } else if (categoryId) {
-      return product.categoryId === categoryId;
-    }
-    return true;
-  });
-
   // Get current category and subcategory names for display
   const currentCategory = categories.find(c => c._id === categoryId);
   const currentSubcategory = currentCategory?.subcategories?.find(s => s._id === subcategoryId);
-
+  console.log("products : " , products)
   return (
     <div className="p-6">
       {/* Alerts */}
@@ -345,6 +534,7 @@ const ProductsAdmin = () => {
             setPreviewImages([]);
           }}
           className="bg-blue-600 text-white px-4 py-2 rounded"
+          disabled={loading}
         >
           Add Product
         </button>
@@ -367,6 +557,7 @@ const ProductsAdmin = () => {
                   }
                 }}
                 className="w-full p-2 border rounded"
+                disabled={loading}
               >
                 <option value="">All Categories</option>
                 {categories.map(category => (
@@ -389,6 +580,7 @@ const ProductsAdmin = () => {
                     }
                   }}
                   className="w-full p-2 border rounded"
+                  disabled={loading}
                 >
                   <option value="">All Subcategories</option>
                   {currentCategory.subcategories.map(subcategory => (
@@ -403,12 +595,34 @@ const ProductsAdmin = () => {
                 <button
                   onClick={() => navigate('/admin/products')}
                   className="p-2 border rounded text-gray-600 hover:bg-gray-100"
+                  disabled={loading}
                 >
                   Clear Filters
                 </button>
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="text-center py-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && !loading && (
+        <div className="bg-red-100 text-red-800 p-4 rounded mb-6">
+          {error}
+          <button 
+            onClick={fetchProducts} 
+            className="ml-4 underline text-blue-600"
+          >
+            Try Again
+          </button>
         </div>
       )}
 
@@ -429,6 +643,7 @@ const ProductsAdmin = () => {
                     onChange={handleChange}
                     className="w-full p-2 border rounded"
                     required
+                    disabled={loading}
                   >
                     <option value="">Select Category</option>
                     {categories.map(category => (
@@ -448,6 +663,7 @@ const ProductsAdmin = () => {
                       onChange={handleChange}
                       className="w-full p-2 border rounded"
                       required
+                      disabled={loading}
                     >
                       <option value="">Select Subcategory</option>
                       {availableSubcategories.map(subcategory => (
@@ -468,6 +684,7 @@ const ProductsAdmin = () => {
                     onChange={handleChange}
                     className="w-full p-2 border rounded"
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div>
@@ -479,25 +696,48 @@ const ProductsAdmin = () => {
                     className="w-full p-2 border rounded"
                     rows="3"
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1">Main Image*</label>
+                  <label className="block text-gray-700 mb-1">
+                    Main Image{!currentProduct && '*'}
+                    {currentProduct && ' (Leave empty to keep current image)'}
+                  </label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleMainImageChange}
                     className="w-full p-2 border rounded"
                     required={!currentProduct}
+                    disabled={loading}
                   />
-                  {previewImage && (
+                  {/* {previewImage && (
                     <div className="mt-2">
                       <img src={previewImage} alt="Preview" className="h-32 object-contain"/>
-                      {formData.mainImage && 
+                      {formData.mainImage && formData.mainImage instanceof File && 
                         <p className="text-sm text-gray-500 mt-1">{formData.mainImage.name}</p>
                       }
                     </div>
-                  )}
+                  )} */}
+{previewImage && (
+  <div className="mt-2">
+    <img 
+      src={typeof previewImage === 'string' && previewImage.startsWith('http') 
+        ? previewImage 
+        : URL.createObjectURL(formData.mainImage)} 
+      alt="Preview" 
+      className="h-32 object-contain"
+      onError={(e) => {
+        e.target.onerror = null; 
+        e.target.src = '/placeholder-image.jpg';
+      }}
+    />
+    {formData.mainImage && formData.mainImage instanceof File && 
+      <p className="text-sm text-gray-500 mt-1">{formData.mainImage.name}</p>
+    }
+  </div>
+)}
                 </div>
               </div>
               {/* Pricing & Details */}
@@ -514,6 +754,7 @@ const ProductsAdmin = () => {
                     className="w-full p-2 border rounded"
                     placeholder="e.g. 28500"
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div>
@@ -525,6 +766,7 @@ const ProductsAdmin = () => {
                     className="w-full p-2 border rounded"
                     rows="5"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -540,6 +782,7 @@ const ProductsAdmin = () => {
                     onChange={(e) => handleSpecChange(index, 'specName', e.target.value)}
                     placeholder="Spec name"
                     className="flex-1 p-2 border rounded"
+                    disabled={loading}
                   />
                   <input
                     type="text"
@@ -547,11 +790,13 @@ const ProductsAdmin = () => {
                     onChange={(e) => handleSpecChange(index, 'specValue', e.target.value)}
                     placeholder="Spec value"
                     className="flex-1 p-2 border rounded"
+                    disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => removeSpecField(index)}
                     className="text-red-600 px-2"
+                    disabled={loading || formData.specifications.length <= 1}
                   >
                     ×
                   </button>
@@ -561,6 +806,7 @@ const ProductsAdmin = () => {
                 type="button"
                 onClick={addSpecField}
                 className="text-blue-600 text-sm mt-2"
+                disabled={loading}
               >
                 + Add Specification
               </button>
@@ -576,6 +822,7 @@ const ProductsAdmin = () => {
                     onChange={(e) => handleFeatureChange(index, 'featureName', e.target.value)}
                     placeholder="Feature name"
                     className="flex-1 p-2 border rounded"
+                    disabled={loading}
                   />
                   <input
                     type="text"
@@ -583,11 +830,13 @@ const ProductsAdmin = () => {
                     onChange={(e) => handleFeatureChange(index, 'featureValue', e.target.value)}
                     placeholder="Feature value"
                     className="flex-1 p-2 border rounded"
+                    disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
                     className="text-red-600 px-2"
+                    disabled={loading || formData.features.length <= 1}
                   >
                     ×
                   </button>
@@ -597,13 +846,17 @@ const ProductsAdmin = () => {
                 type="button"
                 onClick={addFeature}
                 className="text-blue-600 text-sm mt-2"
+                disabled={loading}
               >
                 + Add Feature
               </button>
             </div>
             {/* Additional Images */}
             <div className="mt-6">
-              <h2 className="text-lg font-semibold border-b pb-2 mb-4">Additional Images</h2>
+              <h2 className="text-lg font-semibold border-b pb-2 mb-4">
+                Additional Images
+                {currentProduct && ' (New images will be added to existing ones)'}
+              </h2>
               <div className="mb-4">
                 <input
                   type="file"
@@ -611,26 +864,53 @@ const ProductsAdmin = () => {
                   onChange={handleAdditionalImagesChange}
                   className="w-full p-2 border rounded"
                   multiple
+                  disabled={loading}
                 />
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {previewImages.map((image, index) => (
                   <div key={index} className="relative border p-2 rounded">
                     <img src={image} alt={`Preview ${index}`} className="h-32 w-full object-contain"/>
                     {formData.additionalImages[index] && typeof formData.additionalImages[index] !== 'string' && (
                       <p className="text-xs truncate mt-1">{formData.additionalImages[index].name}</p>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => removeAdditionalImage(index)}
-                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                    >
-                      ×
-                    </button>
+                    {!loading && (
+                      <button
+                        type="button"
+                        onClick={() => removeAdditionalImage(index)}
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
-              </div>
+              </div> */}
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+  {previewImages.map((image, index) => (
+    <div key={index} className="relative border p-2 rounded">
+      <img 
+        src={typeof image === 'string' && image.startsWith('http') 
+          ? image 
+          : URL.createObjectURL(formData.additionalImages[index])} 
+        alt={`Preview ${index}`} 
+        className="h-32 w-full object-contain"
+        onError={(e) => {
+          e.target.onerror = null; 
+          e.target.src = '/placeholder-image.jpg';
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => removeAdditionalImage(index)}
+        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+      >
+        ×
+      </button>
+    </div>
+  ))}
+</div>
             </div>
             <div className="flex justify-end space-x-4 mt-8">
               <button
@@ -640,21 +920,23 @@ const ProductsAdmin = () => {
                   setCurrentProduct(null);
                 }}
                 className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                disabled={loading}
               >
-                {currentProduct ? 'Save Changes' : 'Save Product'}
+                {loading ? 'Saving...' : currentProduct ? 'Save Changes' : 'Save Product'}
               </button>
             </div>
           </form>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          {filteredProducts.length > 0 ? (
+          {!loading && !error && products.length > 0 ? (
             <table className="min-w-full bg-white border">
               <thead>
                 <tr className="bg-gray-100">
@@ -668,50 +950,64 @@ const ProductsAdmin = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map(product => {
-                  const category = categories.find(c => c._id === product.categoryId);
-                  const subcategory = category?.subcategories?.find(s => s._id === product.subcategoryId);
-                  
-                  return (
-                    <tr key={product._id} className="border-t hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <img src={product.mainImage} alt={product.name} className="w-16 h-16 object-cover rounded"/>
-                      </td>
-                      <td className="py-3 px-4 font-medium">{product.name}</td>
-                      <td className="py-3 px-4 text-gray-600">{product.shortDescription}</td>
-                      <td className="py-3 px-4">${product.price?.toLocaleString()}</td>
-                      {!categoryId && (
-                        <td className="py-3 px-4">
-                          {category?.name || 'N/A'}
-                        </td>
-                      )}
-                      {categoryId && !subcategoryId && (
-                        <td className="py-3 px-4">
-                          {subcategory?.name || 'N/A'}
-                        </td>
-                      )}
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => editProduct(product._id)}
-                            className="text-blue-600 hover:underline"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deleteProduct(product._id)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
+  {products.map(product => {
+    const category = categories.find(c => c._id === product.categoryId);
+    const subcategory = category?.subcategories?.find(s => s._id === product.subcategoryId);
+    
+    return (
+      <tr key={product._id} className="border-t hover:bg-gray-50">
+        <td className="py-3 px-4">
+  {product.mainImage && (
+    <img 
+      src={product.mainImage.startsWith('http') 
+        ? product.mainImage 
+        : `http://localhost:5001/uploads/${product.mainImage}`} 
+      alt={product.name} 
+      className="w-16 h-16 object-cover rounded"
+      onError={(e) => {
+        e.target.onerror = null; 
+        e.target.src = '/placeholder-image.jpg';
+      }}
+    />
+  )}
+</td>
+        <td className="py-3 px-4 font-medium">{product.name}</td>
+        <td className="py-3 px-4 text-gray-600">{product.shortDescription}</td>
+        <td className="py-3 px-4">${product.price?.toLocaleString()}</td>
+        <td className="py-3 px-4">{product.categoryId?.name}</td>
+
+        {/* {!categoryId && (
+          <td className="py-3 px-4">
+            {category?.name || 'N/A'}
+          </td>
+        )}
+        {categoryId && !subcategoryId && (
+          <td className="py-3 px-4">
+            {subcategory?.name || 'N/A'}
+          </td>
+        )} */}
+        <td className="py-3 px-4">
+          <div className="flex space-x-2">
+            <button
+              onClick={() => editProduct(product._id)}
+              className="text-blue-600 hover:underline"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => deleteProduct(product._id)}
+              className="text-red-600 hover:underline"
+            >
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
             </table>
-          ) : (
+          ) : (  
             <div className="text-center py-8 bg-gray-50 rounded-lg">
               <p className="text-gray-600">No products found matching the selected filters.</p>
               {(categoryId || subcategoryId) && (
@@ -731,3 +1027,5 @@ const ProductsAdmin = () => {
 };
 
 export default ProductsAdmin;
+
+

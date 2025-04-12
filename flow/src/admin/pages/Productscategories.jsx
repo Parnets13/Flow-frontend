@@ -1,33 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const CategoriesAdmin = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([
-    {
-      _id: "1",
-      name: "Screw Compressors",
-      description: "High-efficiency rotary screw compressors",
-      image: null,
-      imagePreview: "/abot.png",
-      features: [
-        { name: "Energy Efficient", description: "Reduces power consumption by 25%" },
-        { name: "Low Noise", description: "Operates at just 65dB" }
-      ],
-      subcategories: [
-        { _id: "101", name: "Oil-Free Screw Compressors" },
-        { _id: "102", name: "Oil-Injected Screw Compressors" }
-      ]
-    }
-  ]);
-
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [featureInput, setFeatureInput] = useState({ name: '', description: '' });
   const [categoryFeatures, setCategoryFeatures] = useState([]);
-  const [subcategoryInput, setSubcategoryInput] = useState('');
-  const [categorySubcategories, setCategorySubcategories] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  // API base URL
+  const API_URL = 'http://localhost:5001/api/category';
+
+  // Fetch all categories
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(API_URL);
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      showAlert('Failed to fetch categories', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Initialize form when editing
+  useEffect(() => {
+    if (currentCategory) {
+      // Format features based on the data structure
+      const features = Array.isArray(currentCategory.features) 
+        ? currentCategory.features.map(feature => {
+            if (typeof feature === 'string') {
+              return { name: feature, description: '' };
+            }
+            return feature;
+          })
+        : [];
+      
+      setCategoryFeatures(features);
+      
+      // Set image preview if available
+      if (currentCategory.image) {
+        setImagePreview(`http://localhost:5001/${currentCategory.image}`);
+      } else {
+        setImagePreview(null);
+      }
+    } else {
+      // Reset form if adding new
+      setCategoryFeatures([]);
+      setImagePreview(null);
+    }
+  }, [currentCategory]);
 
   const showAlert = (message, type = 'success') => {
     const newAlert = { id: Date.now(), message, type };
@@ -37,55 +70,83 @@ const CategoriesAdmin = () => {
     }, 3000);
   };
 
-  const handleSubmit = (formData) => {
-    if (currentCategory) {
-      // Update existing category
-      setCategories(categories.map(cat => 
-        cat._id === currentCategory._id ? { 
-          ...cat, 
-          ...formData,
-          subcategories: categorySubcategories 
-        } : cat
-      ));
-      showAlert("Category updated successfully!");
-    } else {
-      // Add new category
-      const newCategory = { 
-        _id: Date.now().toString(),
-        name: formData.name,
-        description: formData.description,
-        image: formData.image,
-        imagePreview: formData.imagePreview || '/placeholder.png',
-        features: categoryFeatures,
-        subcategories: categorySubcategories
-      };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const formData = new FormData();
+      formData.append('name', e.target.name.value);
+      formData.append('description', e.target.description.value || '');
       
-      setCategories([...categories, newCategory]);
-      showAlert("Category added successfully!");
+      // Prepare features data
+      const featuresData = categoryFeatures.map(feature => ({
+        name: feature.name,
+        description: feature.description || ''
+      }));
+      formData.append('features', JSON.stringify(featuresData));
       
-      // Navigate to products page with the new category
-      navigate('/admin/products', {
-        state: { 
-          newCategory: {
-            _id: newCategory._id,
-            name: newCategory.name,
-            subcategories: newCategory.subcategories
-          } 
-        }
-      });
+      // Handle image upload
+      if (e.target.image.files && e.target.image.files[0]) {
+        formData.append('image', e.target.image.files[0]);
+      }
+      
+      let response;
+      
+      if (currentCategory) {
+        // Update existing category
+        response = await axios.put(
+          `${API_URL}/${currentCategory._id}`, 
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        showAlert('Category updated successfully!');
+        
+        // Refresh categories list
+        await fetchCategories();
+        setShowModal(false);
+      } else {
+        // Create new category
+        response = await axios.post(
+          API_URL, 
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        showAlert('Category added successfully!');
+        
+        // Refresh categories list
+        await fetchCategories();
+        setShowModal(false);
+      }
+    } catch (error) {
+      console.error('Error saving category:', error);
+      showAlert(
+        error.response?.data?.message || 'Failed to save category', 
+        'error'
+      );
     }
-    setShowModal(false);
   };
 
-  const deleteCategory = (id) => {
-    setCategories(categories.filter(c => c._id !== id));
-    showAlert("Category deleted successfully!");
+  const deleteCategory = async (id) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await axios.delete(`${API_URL}/${id}`);
+        showAlert('Category deleted successfully!');
+        await fetchCategories();
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        showAlert(
+          error.response?.data?.message || 'Failed to delete category', 
+          'error'
+        );
+      }
+    }
   };
 
   const handleViewProducts = (categoryId) => {
-    navigate('/admin/products?category=' + categoryId);
+    const newCategory = categoryId
+    navigate(`/admin/products/${newCategory}`);
   };
-
+  
   const addFeature = () => {
     if (featureInput.name.trim() === '') return;
     
@@ -99,26 +160,23 @@ const CategoriesAdmin = () => {
     setCategoryFeatures(updatedFeatures);
   };
 
-  const addSubcategory = () => {
-    if (subcategoryInput.trim() === '') return;
-    
-    const newSubcategory = {
-      _id: `sub-${Date.now()}`,
-      name: subcategoryInput
-    };
-    
-    setCategorySubcategories([...categorySubcategories, newSubcategory]);
-    setSubcategoryInput('');
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImagePreview(URL.createObjectURL(e.target.files[0]));
+    }
   };
 
-  const removeSubcategory = (index) => {
-    const updatedSubcategories = [...categorySubcategories];
-    updatedSubcategories.splice(index, 1);
-    setCategorySubcategories(updatedSubcategories);
-  };
+  if (loading) {
+    return (
+      <div className="p-6 flex justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
+      {/* Alerts */}
       {alerts.map(alert => (
         <div 
           key={alert.id} 
@@ -134,7 +192,7 @@ const CategoriesAdmin = () => {
           onClick={() => {
             setCurrentCategory(null);
             setCategoryFeatures([]);
-            setCategorySubcategories([]);
+            setImagePreview(null);
             setShowModal(true);
           }}
           className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -143,87 +201,78 @@ const CategoriesAdmin = () => {
         </button>
       </div>
 
+      {/* Categories grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map(category => (
-          <div key={category._id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-            <div className="relative">
-              <img 
-                src={category.imagePreview || (category.image ? URL.createObjectURL(category.image) : '/placeholder.png')} 
-                alt={category.name} 
-                className="w-full h-48 object-cover"
-              />
-            </div>
-            <div className="p-4">
-              <h3 className="font-bold text-lg">{category.name}</h3>
-              <p className="text-gray-600 text-sm mt-1">{category.description}</p>
-              
-              {/* Features section */}
-              {category.features && category.features.length > 0 && (
-                <div className="mt-3">
-                  <h4 className="font-semibold text-sm text-gray-700">Features:</h4>
-                  <ul className="mt-1 text-sm">
-                    {category.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start mt-1">
-                        <span className="inline-block h-5 w-5 mr-1 text-blue-600">•</span>
-                        <div>
-                          <span className="font-medium">{feature.name}</span>
-                          {feature.description && (
-                            <p className="text-gray-500 text-xs">{feature.description}</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {/* Subcategories section */}
-              {category.subcategories && category.subcategories.length > 0 && (
-                <div className="mt-3">
-                  <h4 className="font-semibold text-sm text-gray-700">Subcategories:</h4>
-                  <ul className="mt-1 text-sm">
-                    {category.subcategories.map((subcategory, idx) => (
-                      <li key={idx} className="flex items-start mt-1">
-                        <span className="inline-block h-5 w-5 mr-1 text-blue-600">-</span>
-                        <div>
-                          <span className="font-medium">{subcategory.name}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              <div className="flex justify-between mt-4">
-                <button 
-                  onClick={() => handleViewProducts(category._id)}
-                  className="text-blue-600 text-sm hover:underline"
-                >
-                  View Products
-                </button>
-                <div className="flex space-x-2">
+        {categories.length === 0 ? (
+          <div className="col-span-full text-center py-10">
+            <p className="text-gray-500">No categories found. Add your first category.</p>
+          </div>
+        ) : (
+          categories.map(category => (
+            <div key={category._id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="relative">
+                <img 
+                  src={category.image ? `http://localhost:5001/${category.image}` : '/placeholder.png'} 
+                  alt={category.name} 
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    e.target.src = '/placeholder.png';
+                  }}
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="font-bold text-lg">{category.name}</h3>
+                <p className="text-gray-600 text-sm mt-1">{category.description}</p>
+                
+                {/* Features section */}
+                {category.features && category.features.length > 0 && (
+                  <div className="mt-3">
+                    <h4 className="font-semibold text-sm text-gray-700">Features:</h4>
+                    <ul className="mt-1 text-sm">
+                      {category.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start mt-1">
+                          <span className="inline-block h-5 w-5 mr-1 text-blue-600">•</span>
+                          <div>
+                            <span className="font-medium">{typeof feature === 'string' ? feature : feature.name}</span>
+                            {feature.description && (
+                              <p className="text-gray-500 text-xs">{feature.description}</p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                <div className="flex justify-between mt-4">
                   <button 
-                    onClick={() => {
-                      setCurrentCategory(category);
-                      setCategoryFeatures(category.features || []);
-                      setCategorySubcategories(category.subcategories || []);
-                      setShowModal(true);
-                    }}
-                    className="text-yellow-600 text-sm hover:underline"
+                    onClick={() => handleViewProducts(category._id)}
+                    className="text-blue-600 text-sm hover:underline"
                   >
-                    Edit
+                    View Products
                   </button>
-                  <button 
-                    onClick={() => deleteCategory(category._id)}
-                    className="text-red-600 text-sm hover:underline"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => {
+                        setCurrentCategory(category);
+                        setShowModal(true);
+                      }}
+                      className="text-yellow-600 text-sm hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => deleteCategory(category._id)}
+                      className="text-red-600 text-sm hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Category Modal */}
@@ -234,31 +283,15 @@ const CategoriesAdmin = () => {
               <h2 className="text-xl font-bold">
                 {currentCategory ? 'Edit Category' : 'Add Category'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700">
+              <button 
+                onClick={() => setShowModal(false)} 
+                className="text-gray-500 hover:text-gray-700"
+              >
                 &times;
               </button>
             </div>
             <div className="p-4">
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                const formData = {
-                  name: e.target.name.value,
-                  description: e.target.description.value,
-                  image: currentCategory?.image || null,
-                  imagePreview: currentCategory?.imagePreview || null,
-                  features: categoryFeatures,
-                  subcategories: categorySubcategories
-                };
-                
-                // Handle image upload
-                const imageInput = e.target.image.files[0];
-                if (imageInput) {
-                  formData.image = imageInput;
-                  formData.imagePreview = URL.createObjectURL(imageInput);
-                }
-                
-                handleSubmit(formData);
-              }}>
+              <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-2">Name*</label>
                   <input
@@ -279,19 +312,23 @@ const CategoriesAdmin = () => {
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Image*</label>
+                  <label className="block text-gray-700 mb-2">Image</label>
                   <input
                     type="file"
                     name="image"
                     accept="image/*"
                     className="w-full p-2 border rounded"
+                    onChange={handleImageChange}
                   />
-                  {(currentCategory?.imagePreview || currentCategory?.image) && (
+                  {imagePreview && (
                     <div className="mt-2">
                       <img 
-                        src={currentCategory.imagePreview || URL.createObjectURL(currentCategory.image)} 
+                        src={imagePreview} 
                         alt="Preview" 
                         className="h-32 object-contain"
+                        onError={(e) => {
+                          e.target.src = '/placeholder.png';
+                        }}
                       />
                     </div>
                   )}
@@ -353,50 +390,6 @@ const CategoriesAdmin = () => {
                   )}
                 </div>
                 
-                {/* Subcategories Section */}
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Subcategories</label>
-                  
-                  {/* Subcategory input field */}
-                  <div className="flex mb-2">
-                    <input
-                      type="text"
-                      placeholder="Subcategory name"
-                      value={subcategoryInput}
-                      onChange={(e) => setSubcategoryInput(e.target.value)}
-                      className="w-full p-2 border rounded-l"
-                    />
-                    <button 
-                      type="button" 
-                      onClick={addSubcategory}
-                      className="bg-gray-200 text-gray-800 px-3 py-1 rounded-r border-t border-r border-b"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  
-                  {/* Subcategories list */}
-                  {categorySubcategories.length > 0 && (
-                    <div className="border rounded p-3 mt-2">
-                      <h4 className="font-medium text-sm mb-2">Added Subcategories:</h4>
-                      <ul className="space-y-2">
-                        {categorySubcategories.map((subcategory, idx) => (
-                          <li key={idx} className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                            <span className="font-medium text-sm">{subcategory.name}</span>
-                            <button 
-                              type="button" 
-                              onClick={() => removeSubcategory(idx)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              ×
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-                
                 <div className="flex justify-end space-x-2">
                   <button
                     type="button"
@@ -409,7 +402,7 @@ const CategoriesAdmin = () => {
                     type="submit"
                     className="px-4 py-2 bg-blue-600 text-white rounded"
                   >
-                    Save
+                    {currentCategory ? 'Update' : 'Save'}
                   </button>
                 </div>
               </form>

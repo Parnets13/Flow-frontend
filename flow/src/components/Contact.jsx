@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock, FaPaperPlane } from 'react-icons/fa';
+import axios from 'axios';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const ContactPage = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,14 +23,15 @@ const ContactPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     
-    // Simulate form submission
-    setTimeout(() => {
-      console.log('Form submitted:', formData);
-      setIsSubmitting(false);
+    try {
+      const response = await axios.post('http://localhost:5001/api/contacts', formData);
+      
+      console.log('Form submitted successfully:', response.data);
       setSubmitSuccess(true);
       setFormData({
         name: '',
@@ -40,14 +43,16 @@ const ContactPage = () => {
       
       // Hide success message after 5 seconds
       setTimeout(() => setSubmitSuccess(false), 5000);
-    }, 1500);
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      setError(err.response?.data?.message || 'Failed to submit form. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-     
-
       {/* Main Content */}
       <div className="container mx-auto px-6 py-16">
         <div className="flex flex-col lg:flex-row gap-12">
@@ -59,6 +64,12 @@ const ContactPage = () => {
               {submitSuccess && (
                 <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg">
                   Thank you for your message! We'll get back to you soon.
+                </div>
+              )}
+              
+              {error && (
+                <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
+                  {error}
                 </div>
               )}
 
@@ -214,14 +225,10 @@ const ContactPage = () => {
                   </div>
                 </div>
               </div>
-
-              
             </div>
           </div>
         </div>
       </div>
-
-      
     </div>
   );
 };

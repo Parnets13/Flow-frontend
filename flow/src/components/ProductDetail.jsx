@@ -1,12 +1,22 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import axios from 'axios';
+const formatIndianRupees = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0
+  }).format(amount);
+};
 
 const ProductDetail = () => {
-  const { category, productId } = useParams();
+  const { categoryId, productId } = useParams(); 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,112 +30,26 @@ const ProductDetail = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // Mock product database
   useEffect(() => {
-    const mockProducts = {
-      'screw-compressors': {
-        'ecovsd-75hp': {
-          id: 'ecovsd-75hp',
-          name: "EcoVSD+ 75HP",
-          category: "Screw Compressor",
-          price: "$28,500",
-          description: "Premium efficiency variable speed drive compressor with smart control",
-          fullDescription: "The EcoVSD+ series represents the pinnacle of energy-efficient compressor technology. With IE4 premium efficiency motors and advanced variable speed control, these compressors automatically adjust output to match air demand, saving significant energy costs. The integrated smart controller provides real-time monitoring and diagnostics.",
-          specs: {
-            "Flow Rate": "75-300 CFM",
-            "Pressure": "100-175 PSIG",
-            "Motor": "Premium Efficiency IE4",
-            "Noise Level": "68 dB(A)",
-            "Dimensions": "78\" x 48\" x 62\"",
-            "Weight": "1850 lbs",
-            "Warranty": "5 years"
-          },
-          features: [
-            "Variable speed drive technology",
-            "Energy savings up to 50%",
-            "Remote monitoring capability",
-            "Low noise operation",
-            "Integrated air treatment"
-          ],
-          images: [
-            "/abot.png",
-            "/about.png",
-            "/abot.png"
-          ]
-        },
-        'ecovsd-50hp': {
-          id: 'ecovsd-50hp',
-          name: "EcoVSD+ 50HP",
-          category: "Screw Compressor",
-          price: "$22,500",
-          description: "Premium efficiency variable speed drive compressor with smart control",
-          fullDescription: "The EcoVSD+ 50HP model offers all the benefits of our VSD technology in a more compact package. Ideal for medium-sized operations requiring energy-efficient compressed air solutions with precise control.",
-          specs: {
-            "Flow Rate": "50-200 CFM",
-            "Pressure": "100-175 PSIG",
-            "Motor": "Premium Efficiency IE4",
-            "Noise Level": "65 dB(A)",
-            "Dimensions": "72\" x 42\" x 58\"",
-            "Weight": "1600 lbs",
-            "Warranty": "5 years"
-          },
-          features: [
-            "Variable speed drive technology",
-            "Energy savings up to 45%",
-            "Remote monitoring capability",
-            "Quiet operation",
-            "Space-saving design"
-          ],
-          images: [
-            "/about.png",
-            "/abot.png",
-            "/about.png"
-          ]
-        }
-      },
-      '2-stage-compressors': {
-        'duratwo-50hp': {
-          id: 'duratwo-50hp',
-          name: "DuraTwo 50HP",
-          category: "2-Stage Compressor",
-          price: "$24,900",
-          description: "Heavy-duty two-stage compressor for industrial applications",
-          fullDescription: "The DuraTwo series is built for demanding industrial environments where reliability is critical. The two-stage design provides higher efficiency at elevated pressures. Heavy-duty cast iron construction ensures long service life even in the toughest conditions.",
-          specs: {
-            "Flow Rate": "50-200 CFM",
-            "Pressure": "175-250 PSIG",
-            "Motor": "Cast Iron Construction",
-            "Noise Level": "72 dB(A)",
-            "Dimensions": "65\" x 42\" x 58\"",
-            "Weight": "2200 lbs",
-            "Warranty": "3 years"
-          },
-          features: [
-            "Two-stage intercooled design",
-            "Heavy-duty cast iron construction",
-            "High-efficiency airend",
-            "Minimal maintenance requirements",
-            "Robust control system"
-          ],
-          images: [
-            "/about.png",
-            "/abot.png",
-            "/about.png"
-          ]
-        }
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`http://localhost:5001/api/product/${productId}`);
+        setProduct(response.data);
+        // Set product name in form data
+        setFormData(prev => ({
+          ...prev,
+          product: response.data.name
+        }));
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      } finally {
+        setLoading(false);
       }
     };
-
-    // Simulate API fetch
-    setTimeout(() => {
-      const productData = mockProducts[category]?.[productId];
-      setProduct(productData);
-      if (productData) {
-        setFormData(prev => ({...prev, product: productData.name}));
-      }
-      setLoading(false);
-    }, 500);
-  }, [category, productId]);
+  
+    fetchProduct();
+  }, [productId]);
 
   const validateForm = () => {
     const errors = {};
@@ -145,7 +69,6 @@ const ProductDetail = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({...prev, [name]: value}));
-    // Clear error when user starts typing
     if (formErrors[name]) {
       setFormErrors(prev => ({...prev, [name]: ''}));
     }
@@ -158,14 +81,11 @@ const ProductDetail = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Quote request submitted:', formData);
+      await axios.post('http://localhost:5001/api/quote', formData);
       setSubmitSuccess(true);
       setTimeout(() => {
         setShowQuoteForm(false);
         setSubmitSuccess(false);
-        // Reset form but keep product name
         setFormData({
           name: '',
           email: '',
@@ -181,6 +101,10 @@ const ProductDetail = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getImageUrl = (image) => {
+    return image.startsWith('http') ? image : `http://localhost:5001/uploads/${image}`;
   };
 
   if (loading) {
@@ -208,10 +132,56 @@ const ProductDetail = () => {
     );
   }
 
+  const allImages = [product.mainImage, ...(product.additionalImages || [])].filter(Boolean);
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
+      {/* Image Modal */}
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+          <div className="relative max-w-4xl w-full">
+            <button 
+              onClick={() => setShowImageModal(false)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300"
+            >
+              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            <div className="h-[80vh] flex items-center justify-center">
+              <img
+                src={getImageUrl(allImages[currentImage])}
+                alt={product.name}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+            
+            {allImages.length > 1 && (
+              <div className="flex justify-center mt-4 space-x-2">
+                {allImages.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImage(index)}
+                    className={`w-16 h-16 border-2 rounded overflow-hidden transition ${
+                      currentImage === index ? 'border-blue-500' : 'border-transparent hover:border-gray-500'
+                    }`}
+                  >
+                    <img
+                      src={getImageUrl(img)}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Quote Request Modal */}
-      {showQuoteForm && (
+      {/* {showQuoteForm && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="flex justify-between items-start p-4 border-b">
@@ -243,108 +213,96 @@ const ProductDetail = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmitQuote} className="p-6">
-                <div className="mb-4">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${formErrors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {formErrors.name && <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>}
-                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border ${formErrors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                    />
+                    {formErrors.name && <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>}
+                  </div>
 
-                <div className="mb-4">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${formErrors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {formErrors.email && <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>}
-                </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border ${formErrors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                    />
+                    {formErrors.email && <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>}
+                  </div>
 
-                <div className="mb-4">
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${formErrors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {formErrors.phone && <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>}
-                </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border ${formErrors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                    />
+                    {formErrors.phone && <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>}
+                  </div>
 
-                <div className="mb-4">
-                  <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
-                    Company Name
-                  </label>
-                  <input
-                    type="text"
-                    id="company"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Name
+                    </label>
+                    <input
+                      type="text"
+                      id="company"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
 
-                <div className="mb-4">
-                  <label htmlFor="product" className="block text-sm font-medium text-gray-700 mb-1">
-                    Product
-                  </label>
-                  <input
-                    type="text"
-                    id="product"
-                    name="product"
-                    value={formData.product}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity
+                    </label>
+                    <select
+                      id="quantity"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                        <option key={num} value={num}>{num}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div className="mb-4">
-                  <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity
-                  </label>
-                  <select
-                    id="quantity"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                    Additional Information
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows="3"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  ></textarea>
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                      Additional Information
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      rows="3"
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    ></textarea>
+                  </div>
                 </div>
 
                 <div className="flex justify-end space-x-3 mt-6">
@@ -361,7 +319,7 @@ const ProductDetail = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#4682c4] hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
@@ -379,7 +337,7 @@ const ProductDetail = () => {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
@@ -405,8 +363,11 @@ const ProductDetail = () => {
                 <svg className="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
                   <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 9 4-4-4-4"/>
                 </svg>
-                <Link to={`/products/${category}`} className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 capitalize">
-                  {category.replace('-', ' ')}
+                <Link 
+                  to={`/products/${categoryId}`} 
+                  className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 capitalize"
+                >
+                  {product.categoryId?.name || categoryId?.replace('-', ' ')}
                 </Link>
               </div>
             </li>
@@ -426,36 +387,52 @@ const ProductDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
             {/* Product Images */}
             <div>
-              <div className="mb-4 rounded-lg overflow-hidden h-96 flex items-center justify-center bg-gray-100">
-                <img
-                  src={product.images[currentImage]}
-                  alt={product.name}
-                  className="w-full h-full object-contain"
-                />
+              <div 
+                className="mb-4 rounded-lg overflow-hidden h-96 flex items-center justify-center bg-gray-100 cursor-zoom-in"
+                onClick={() => setShowImageModal(true)}
+              >
+                {allImages.length > 0 ? (
+                  <img
+                    src={getImageUrl(allImages[currentImage])}
+                    alt={product.name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="text-gray-400">No image available</div>
+                )}
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                {product.images.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImage(index)}
-                    className={`border-2 rounded-lg overflow-hidden transition duration-200 h-24 flex items-center justify-center bg-gray-100 ${
-                      currentImage === index ? 'border-blue-500' : 'border-transparent hover:border-gray-300'
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-contain"
-                    />
-                  </button>
-                ))}
-              </div>
+              {allImages.length > 1 && (
+                <div className="grid grid-cols-4 gap-3">
+                  {allImages.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImage(index)}
+                      className={`border-2 rounded-lg overflow-hidden transition duration-200 h-24 flex items-center justify-center bg-gray-100 ${
+                        currentImage === index ? 'border-blue-500' : 'border-transparent hover:border-gray-300'
+                      }`}
+                    >
+                      <img
+                        src={getImageUrl(img)}
+                        alt={`${product.name} ${index + 1}`}
+                        className="w-full h-full object-contain"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Product Info */}
-            <div>
+            {/* <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-              <div className="text-xl text-blue-600 font-semibold mb-4">{product.price}</div>
+              <div className="text-xl text-blue-600 font-semibold mb-4">
+                {product.price ? `$${product.price.toLocaleString()}` : 'Price on request'}
+              </div> */}
+              <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+              <div className="text-xl text-blue-600 font-semibold mb-4">
+                {product.price ? formatIndianRupees(product.price) : 'Price on request'}
+              </div>
               
               <div className="flex items-center mb-6">
                 <div className="flex items-center">
@@ -475,36 +452,45 @@ const ProductDetail = () => {
 
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">Description</h2>
-                <p className="text-gray-700">{product.fullDescription}</p>
+                <p className="text-gray-700 whitespace-pre-line">
+                  {product.fullDescription || product.shortDescription || 'No description available'}
+                </p>
               </div>
 
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Key Features</h2>
-                <ul className="space-y-2">
-                  {product.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {product.features?.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Key Features</h2>
+                  <ul className="space-y-2">
+                    {product.features.map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-gray-700">
+                          <span className="font-medium">{feature.featureName}</span>
+                          {feature.featureValue && `: ${feature.featureValue}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-              <div className="flex space-x-4 mb-8">
-                <button 
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                {/* <button 
                   onClick={() => setShowQuoteForm(true)}
-                  className="flex-1 bg-[#4682c4] hover:bg-[#3face2] text-white font-semibold py-3 px-6 rounded-lg transition duration-300"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300"
                 >
                   Request Quote
-                </button>
-                <Link 
-                  to="/contact" 
-                  className="flex-1 border border-blue-600 text-[#4682c4] hover:bg-blue-50 font-semibold py-3 px-6 rounded-lg transition duration-300 text-center"
-                >
-                  Contact Sales
-                </Link>
+                </button> */}
+<Link
+  to="/contact"
+  className="w-[700px] text-center bg-blue-400 hover:bg-blue-500 text-white font-medium py-3 px-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
+>
+  Contact Sales
+</Link>
+
+
               </div>
 
               <div className="border-t border-gray-200 pt-4">
@@ -535,58 +521,35 @@ const ProductDetail = () => {
           </div>
 
           {/* Product Details Tabs */}
-          <div className="border-t border-gray-200">
-            <nav className="flex -mb-px">
-              <button className="border-b-2 border-blue-500 text-blue-600 px-6 py-4 text-sm font-medium">
-                Specifications
-              </button>
-            </nav>
+          {product.specifications?.length > 0 && (
+            <div className="border-t border-gray-200">
+              <nav className="flex -mb-px">
+                <button className="border-b-2 border-blue-500 text-blue-600 px-6 py-4 text-sm font-medium">
+                  Specifications
+                </button>
+              </nav>
 
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Technical Specifications</h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {Object.entries(product.specs).map(([key, value]) => (
-                      <tr key={key}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {key}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {value}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Related Products */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">Related Products</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02]">
-              <div className="h-48 bg-gray-200 flex items-center justify-center">
-                <img src="/abot.png" alt="Related product" className="h-full object-cover" />
-              </div>
               <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">EcoVSD+ 50HP</h3>
-                <p className="text-gray-600 mb-4">Smaller version of our premium VSD compressor</p>
-                <Link
-                  to="/products/screw-compressors/ecovsd-50hp"
-                  className="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center"
-                >
-                  View Details
-                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </Link>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Technical Specifications</h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {product.specifications.map((spec, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-1/3">
+                            {spec.specName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {spec.specValue}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

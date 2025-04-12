@@ -16,7 +16,7 @@ const Alert = ({ message, type, onClose }) => {
         className="bg-transparent border-none cursor-pointer text-lg font-bold"
       >
         ×
-      </button>
+      </button>s
     </div>
   );
 };
