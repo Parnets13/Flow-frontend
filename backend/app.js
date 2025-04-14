@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { connectDb } from './config/db.js';
+import { connectDb } from './config/dB.js';
 
 import bannerRouter from './routes/BannerRouter.js';
 import industrialRouter from "./routes/IndustrialRouter.js" 
