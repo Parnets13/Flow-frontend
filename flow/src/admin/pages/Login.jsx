@@ -30,7 +30,7 @@ const Login = () => {
       };
 
       const body = JSON.stringify({ username, password });
-      const res = await axios.post('http://localhost:5001/api/auth/login', body, config);
+      const res = await axios.post('https://flow-backend-of96.onrender.com/api/auth/login', body, config);
 
       localStorage.setItem('adminToken', res.data.token);
       navigate('/admin/dashboard');

@@ -34,7 +34,7 @@ const OurTeam = () => {
   const [description, setDescription] = useState("");
   const [alerts, setAlerts] = useState([]);
   
-  const API_URL = "http://localhost:5001/api/our-team";
+  const API_URL = "https://flow-backend-of96.onrender.com/api/our-team";
 
   const showAlert = (message, type = 'success') => {
     const newAlert = { id: Date.now(), message, type };
@@ -205,7 +205,7 @@ const OurTeam = () => {
                         <td className="p-3 border-t border-gray-200 text-center">
                           {item.image ? (
                             <img 
-                            src={`http://localhost:5001/uploads/${item.image}`}
+                            src={`https://flow-backend-of96.onrender.com/uploads/${item.image}`}
                               alt="Team Member" 
                               className="w-16 h-16 object-cover rounded-full border border-gray-200 mx-auto"
                               onError={(e) => {

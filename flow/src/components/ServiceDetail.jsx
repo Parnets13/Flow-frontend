@@ -9,7 +9,7 @@ const ServiceDetail = () => {
   const [error, setError] = useState(null);
   const [relatedServices, setRelatedServices] = useState([]);
 
-  const API_BASE_URL = "http://localhost:5001/api/service";
+  const API_BASE_URL = "https://flow-backend-of96.onrender.com/api/service";
 
   useEffect(() => {
     const fetchServiceDetail = async () => {
@@ -118,7 +118,7 @@ const ServiceDetail = () => {
             {/* Service Image */}
             <div className="h-96 bg-gray-100 flex items-center justify-center p-8">
               <img 
-                src={`http://localhost:5001/uploads/${service.image}`}
+                src={`https://flow-backend-of96.onrender.com/uploads/${service.image}`}
                 alt={service.title}
                 className="h-full w-full object-contain"
               />
@@ -190,7 +190,7 @@ const ServiceDetail = () => {
                 >
                   <div className="mb-4 h-40 overflow-hidden">
                     <img 
-                      src={`http://localhost:5001/uploads/${relatedService.image}`}
+                      src={`https://flow-backend-of96.onrender.com/uploads/${relatedService.image}`}
                       alt={relatedService.title}
                       className="w-full h-full object-cover rounded"
                     />

@@ -22,7 +22,7 @@ const Alert = ({ message, type, onClose }) => {
 };
 
 const Services = () => {
-  const API_BASE_URL = "http://localhost:5001/api/service";
+  const API_BASE_URL = "https://flow-backend-of96.onrender.com/api/service";
   
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,7 +236,7 @@ const Services = () => {
                       <tr key={item._id}>
                         <td className="p-3 border-t border-gray-200 text-center">
                           <img 
-                            src={`http://localhost:5001/uploads/${item.image}`}
+                            src={`https://flow-backend-of96.onrender.com/uploads/${item.image}`}
                             alt="Service" 
                             className="w-24 h-20 object-cover border border-gray-200 rounded" 
                           />

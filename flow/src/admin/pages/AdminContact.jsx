@@ -15,7 +15,7 @@ const AdminContacts = () => {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/contacts', {
+        const response = await axios.get('https://flow-backend-of96.onrender.com/api/contacts', {
           params: {
             status: statusFilter === 'all' ? undefined : statusFilter
           }
@@ -43,7 +43,7 @@ const AdminContacts = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const response = await axios.put(`http://localhost:5001/api/contacts/${id}/status`, {
+      const response = await axios.put(`https://flow-backend-of96.onrender.com/api/contacts/${id}/status`, {
         status: newStatus
       });
       
@@ -62,7 +62,7 @@ const AdminContacts = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this contact?')) {
       try {
-        await axios.delete(`http://localhost:5001/api/contacts/${id}`);
+        await axios.delete(`https://flow-backend-of96.onrender.com/api/contacts/${id}`);
         setContacts(contacts.filter(contact => contact._id !== id));
       } catch (err) {
         console.error('Error deleting contact:', err);

@@ -27,7 +27,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
 
   // API base URL - same as in your CategoriesAdmin
-  const API_URL = 'http://localhost:5001/api/category';
+  const API_URL = 'https://flow-backend-of96.onrender.com/api/category';
 
   // Fetch categories from the API
   const fetchCategories = async () => {
@@ -175,7 +175,7 @@ const Products = () => {
                 >
                   <div className="relative h-56 overflow-hidden">
                     <img
-                      src={category.image ? `http://localhost:5001/${category.image}` : '/placeholder.png'}
+                      src={category.image ? `https://flow-backend-of96.onrender.com/${category.image}` : '/placeholder.png'}
                       alt={category.name}
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                       onError={(e) => {

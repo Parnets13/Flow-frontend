@@ -41,7 +41,7 @@ const OurFacility = () => {
   // Alert state
   const [alerts, setAlerts] = useState([]);
   
-  const API_URL = "http://localhost:5001/api/facilities";
+  const API_URL = "https://flow-backend-of96.onrender.com/api/facilities";
   
   // Fetch all facilities
   const fetchFacilities = async () => {
@@ -225,7 +225,7 @@ const OurFacility = () => {
                       <tr key={item._id}>
                         <td className="p-3 border-t border-gray-200 text-center">
                           <img 
-                            src={`http://localhost:5001/uploads/${item.image}`} 
+                            src={`https://flow-backend-of96.onrender.com/uploads/${item.image}`} 
                             alt="Facility" 
                             className="w-24 h-20 object-cover border border-gray-200 rounded" 
                           />
@@ -305,7 +305,7 @@ const OurFacility = () => {
                       {imagePreview && (
                         <div className="w-40 relative border border-gray-200 rounded overflow-hidden">
                           <img 
-                            src={imagePreview.startsWith('data:') ? imagePreview : `http://localhost:5001/uploads/${imagePreview}`} 
+                            src={imagePreview.startsWith('data:') ? imagePreview : `https://flow-backend-of96.onrender.com/uploads/${imagePreview}`} 
                             alt="Preview"
                             className="w-full h-24 object-cover"
                           />

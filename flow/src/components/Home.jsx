@@ -59,17 +59,17 @@ const HomePage = () => {
     const fetchData = async () => {
       try {
         // Fetch banners
-        const bannersResponse = await axios.get("http://localhost:5001/api/banner");
+        const bannersResponse = await axios.get("https://flow-backend-of96.onrender.com/api/banner");
         setBanners(bannersResponse.data);
         
         // Fetch industrial content
-        const industrialResponse = await axios.get("http://localhost:5001/api/industrial");
+        const industrialResponse = await axios.get("https://flow-backend-of96.onrender.com/api/industrial");
         if (industrialResponse.data.length > 0) {
           setIndustrialContent(industrialResponse.data[0]);
         }
         
         // Fetch testimonials
-        const testimonialsResponse = await axios.get("http://localhost:5001/api/testimonial");
+        const testimonialsResponse = await axios.get("https://flow-backend-of96.onrender.com/api/testimonial");
         setTestimonials(testimonialsResponse.data);
         
         setLoading(false);
@@ -134,7 +134,7 @@ const HomePage = () => {
             >
               <div className="absolute inset-0 flex items-center justify-center">
                 <img
-                  src={`http://localhost:5001/${banner.image}`}
+                  src={`https://flow-backend-of96.onrender.com/${banner.image}`}
                   alt={banner.title}
                   className="object-fill w-full h-[600px] opacity-100"
                   style={{ objectPosition: 'center' }}
@@ -280,7 +280,7 @@ const HomePage = () => {
                 <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-cyan-800/20 mix-blend-overlay"></div>
                 {industrialContent?.image ? (
                   <img
-                    src={`http://localhost:5001/${industrialContent.image}`}
+                    src={`https://flow-backend-of96.onrender.com/${industrialContent.image}`}
                     alt="Industrial Content"
                     className="w-full h-full object-cover object-center"
                   />
@@ -473,7 +473,7 @@ const HomePage = () => {
                     <div className="flex items-center">
                       <div className="w-12 h-12 rounded-full bg-white/10 mr-4 overflow-hidden flex-shrink-0">
                         <img 
-                          src={testimonial.image.startsWith('http') ? testimonial.image : `http://localhost:5001/${testimonial.image}`}
+                          src={testimonial.image.startsWith('http') ? testimonial.image : `https://flow-backend-of96.onrender.com/${testimonial.image}`}
                           alt={testimonial.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {

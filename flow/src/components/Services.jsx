@@ -7,7 +7,7 @@ const ServicesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = "http://localhost:5001/api/service";
+  const API_BASE_URL = "https://flow-backend-of96.onrender.com/api/service";
 
   useEffect(() => {
   const fetchServices = async () => {
@@ -104,7 +104,7 @@ const ServicesPage = () => {
                 >
                   <div className="mb-4 h-48 overflow-hidden">
                     <img 
-                      src={`http://localhost:5001/uploads/${service.image}`}
+                      src={`https://flow-backend-of96.onrender.com/uploads/${service.image}`}
                       alt={service.title}
                       className="w-full h-full object-cover rounded"
                     />

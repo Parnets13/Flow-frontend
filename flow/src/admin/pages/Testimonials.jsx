@@ -40,8 +40,8 @@ const Testimonials = () => {
   // Alert state
   const [alerts, setAlerts] = useState([]);
   
-  const API_URL = "http://localhost:5001/api/Testimonial";
-  const BASE_URL = "http://localhost:5001"; // Added base URL for image paths
+  const API_URL = "https://flow-backend-of96.onrender.com/api/Testimonial";
+  const BASE_URL = "https://flow-backend-of96.onrender.com"; // Added base URL for image paths
   
   useEffect(() => {
     fetchTestimonials();

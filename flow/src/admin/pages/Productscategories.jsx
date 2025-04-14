@@ -14,7 +14,7 @@ const CategoriesAdmin = () => {
   const [imagePreview, setImagePreview] = useState(null);
 
   // API base URL
-  const API_URL = 'http://localhost:5001/api/category';
+  const API_URL = 'https://flow-backend-of96.onrender.com/api/category';
 
   // Fetch all categories
   const fetchCategories = async () => {
@@ -51,7 +51,7 @@ const CategoriesAdmin = () => {
       
       // Set image preview if available
       if (currentCategory.image) {
-        setImagePreview(`http://localhost:5001/${currentCategory.image}`);
+        setImagePreview(`https://flow-backend-of96.onrender.com/${currentCategory.image}`);
       } else {
         setImagePreview(null);
       }
@@ -212,7 +212,7 @@ const CategoriesAdmin = () => {
             <div key={category._id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
               <div className="relative">
                 <img 
-                  src={category.image ? `http://localhost:5001/${category.image}` : '/placeholder.png'} 
+                  src={category.image ? `https://flow-backend-of96.onrender.com/${category.image}` : '/placeholder.png'} 
                   alt={category.name} 
                   className="w-full h-48 object-cover"
                   onError={(e) => {

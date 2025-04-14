@@ -29,7 +29,7 @@ const ContactPage = () => {
     setError(null);
     
     try {
-      const response = await axios.post('http://localhost:5001/api/contacts', formData);
+      const response = await axios.post('https://flow-backend-of96.onrender.com/api/contacts', formData);
       
       console.log('Form submitted successfully:', response.data);
       setSubmitSuccess(true);

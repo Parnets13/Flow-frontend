@@ -14,11 +14,11 @@ const ProductCategory = () => {
         setLoading(true);
         
         // First fetch category details to get the name
-        const categoryRes = await axios.get(`http://localhost:5001/api/category/${category}`);
+        const categoryRes = await axios.get(`https://flow-backend-of96.onrender.com/api/category/${category}`);
         setCategoryDetails(categoryRes.data.data);
         
         // Then fetch products for this category
-        const productsRes = await axios.get(`http://localhost:5001/api/product?categoryId=${category}`);
+        const productsRes = await axios.get(`https://flow-backend-of96.onrender.com/api/product?categoryId=${category}`);
         setProducts(productsRes.data.data);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -89,7 +89,7 @@ const ProductCategory = () => {
                 <img 
   src={product.mainImage.startsWith('http') 
     ? product.mainImage 
-    : `http://localhost:5001/uploads/${product.mainImage}`}
+    : `https://flow-backend-of96.onrender.com/uploads/${product.mainImage}`}
   alt={product.name}
   className="w-full h-full object-cover"
   onError={(e) => {

@@ -39,7 +39,7 @@ const OurStory = () => {
   // Alert state
   const [alerts, setAlerts] = useState([]);
   
-  const API_URL = "http://localhost:5001/api/story";
+  const API_URL = "https://flow-backend-of96.onrender.com/api/story";
   
   useEffect(() => {
     fetchStories();
@@ -196,7 +196,7 @@ const OurStory = () => {
                       <tr key={item._id}>
                         <td className="p-3 border-t border-gray-200 text-center">
                           <img 
-                            src={`http://localhost:5001/uploads/${item.image}`} 
+                            src={`https://flow-backend-of96.onrender.com/uploads/${item.image}`} 
                             alt="Story" 
                             className="w-24 h-20 object-cover border border-gray-200 rounded" 
                           />
@@ -266,7 +266,7 @@ const OurStory = () => {
                         <div className="w-40 relative border border-gray-200 rounded overflow-hidden">
                           <img 
                             src={typeof imagePreview === 'string' && !imagePreview.startsWith('http') 
-                              ? `http://localhost:5001/uploads/${imagePreview}` 
+                              ? `https://flow-backend-of96.onrender.com/uploads/${imagePreview}` 
                               : imagePreview} 
                             alt="Preview"
                             className="w-full h-24 object-cover"

@@ -34,7 +34,7 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:5001/api/product/${productId}`);
+        const response = await axios.get(`https://flow-backend-of96.onrender.com/api/product/${productId}`);
         setProduct(response.data);
         // Set product name in form data
         setFormData(prev => ({
@@ -81,7 +81,7 @@ const ProductDetail = () => {
     setIsSubmitting(true);
     
     try {
-      await axios.post('http://localhost:5001/api/quote', formData);
+      await axios.post('https://flow-backend-of96.onrender.com/api/quote', formData);
       setSubmitSuccess(true);
       setTimeout(() => {
         setShowQuoteForm(false);
@@ -104,7 +104,7 @@ const ProductDetail = () => {
   };
 
   const getImageUrl = (image) => {
-    return image.startsWith('http') ? image : `http://localhost:5001/uploads/${image}`;
+    return image.startsWith('http') ? image : `https://flow-backend-of96.onrender.com/uploads/${image}`;
   };
 
   if (loading) {

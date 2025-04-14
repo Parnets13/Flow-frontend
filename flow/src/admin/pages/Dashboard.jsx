@@ -34,9 +34,9 @@ const Dashboard = () => {
         
         // Make API calls to get all products, services, and contacts
         const [productResponse, serviceResponse, contactResponse] = await Promise.all([
-          axios.get('http://localhost:5001/api/product'),
-          axios.get('http://localhost:5001/api/service'),
-          axios.get('http://localhost:5001/api/contacts')
+          axios.get('https://flow-backend-of96.onrender.com/api/product'),
+          axios.get('https://flow-backend-of96.onrender.com/api/service'),
+          axios.get('https://flow-backend-of96.onrender.com/api/contacts')
         ]);
         
         // Set services and contacts state
@@ -229,7 +229,7 @@ const Dashboard = () => {
                   <div key={service._id} className="flex items-start py-4 border-b border-gray-100 last:border-0">
                     <div className="flex-shrink-0 mr-4">
                       <img 
-                        src={`http://localhost:5001/uploads/${service.image}`}
+                        src={`https://flow-backend-of96.onrender.com/uploads/${service.image}`}
                         alt={service.title}
                         className="h-12 w-12 object-cover rounded-lg" 
                         onError={(e) => {

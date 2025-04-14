@@ -30,9 +30,9 @@ const AboutPage = () => {
   const [facilitiesLoading, setFacilitiesLoading] = useState(true);
   const [teamLoading, setTeamLoading] = useState(true);
   
-  const STORY_API_URL = "http://localhost:5001/api/story";
-  const FACILITIES_API_URL = "http://localhost:5001/api/facilities";
-  const TEAM_API_URL = "http://localhost:5001/api/our-team";
+  const STORY_API_URL = "https://flow-backend-of96.onrender.com/api/story";
+  const FACILITIES_API_URL = "https://flow-backend-of96.onrender.com/api/facilities";
+  const TEAM_API_URL = "https://flow-backend-of96.onrender.com/api/our-team";
   
   useEffect(() => {
     fetchStories();
@@ -117,7 +117,7 @@ const AboutPage = () => {
           <div className="relative">
             <div className="absolute -top-8 -left-8 w-64 h-70 bg-blue-200/20 rounded-full blur-3xl"></div>
             <img
-              src={story.image ? `http://localhost:5001/uploads/${story.image}` : "/abot.png"}
+              src={story.image ? `https://flow-backend-of96.onrender.com/uploads/${story.image}` : "/abot.png"}
               alt="FLOW AIR Manufacturing Facility"
               className="relative rounded-xl shadow-2xl w-full h-auto"
             />
@@ -179,7 +179,7 @@ const AboutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="relative">
             <img
-              src={`http://localhost:5001/uploads/${facility.image}`}
+              src={`https://flow-backend-of96.onrender.com/uploads/${facility.image}`}
               alt="FLOW AIR Manufacturing Process"
               className="rounded-xl shadow-xl w-full h-auto"
             />
@@ -319,7 +319,7 @@ const AboutPage = () => {
               <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <div className="h-48 overflow-hidden">
                   <img 
-                    src={`http://localhost:5001/uploads/${facility.image}`} 
+                    src={`https://flow-backend-of96.onrender.com/uploads/${facility.image}`} 
                     alt={facility.title} 
                     className="w-full h-full object-cover"
                   />
@@ -376,7 +376,7 @@ const AboutPage = () => {
                   <div className="h-64 overflow-hidden">
                     {member.image ? (
                       <img 
-                        src={`http://localhost:5001/uploads/${member.image}`} 
+                        src={`https://flow-backend-of96.onrender.com/uploads/${member.image}`} 
                         alt={member.name} 
                         className="w-full h-full object-cover"
                         onError={(e) => {

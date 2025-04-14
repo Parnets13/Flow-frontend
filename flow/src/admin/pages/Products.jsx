@@ -35,7 +35,7 @@ const ProductsAdmin = () => {
   const subcategoryId = searchParams.get('subcategory');
   const [categories, setCategories] = useState([]);
   const [filteredProducts, setfilteredProducts] = useState([]);
-  const API_URL = 'http://localhost:5001/api/category';
+  const API_URL = 'https://flow-backend-of96.onrender.com/api/category';
 
   const fetchCategories = async () => {
     try {
@@ -108,7 +108,7 @@ const ProductsAdmin = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      let url = 'http://localhost:5001/api/product';
+      let url = 'https://flow-backend-of96.onrender.com/api/product';
       
       // Add query parameters if filters are applied
       if (categoryId) {
@@ -152,7 +152,7 @@ const ProductsAdmin = () => {
         }
       });
       
-      const response = await fetch('http://localhost:5001/api/product', {
+      const response = await fetch('https://flow-backend-of96.onrender.com/api/product', {
         method: 'POST',
         body: formData,
         // No Content-Type header - browser will set it with boundary for FormData
@@ -199,7 +199,7 @@ const ProductsAdmin = () => {
         }
       });
       
-      const response = await fetch(`http://localhost:5001/api/product/${id}`, {
+      const response = await fetch(`https://flow-backend-of96.onrender.com/api/product/${id}`, {
         method: 'PUT',
         body: formData,
         // No Content-Type header - browser will set it with boundary for FormData
@@ -220,7 +220,7 @@ const ProductsAdmin = () => {
   // Delete product
   const deleteProductFromAPI = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/product/${id}`, {
+      const response = await fetch(`https://flow-backend-of96.onrender.com/api/product/${id}`, {
         method: 'DELETE',
       });
       
@@ -454,12 +454,12 @@ const ProductsAdmin = () => {
       // if (product.mainImage) {
       //   setPreviewImage(product.mainImage.startsWith('http') 
       //     ? product.mainImage 
-      //     : `http://localhost:5001/${product.mainImage}`);
+      //     : `https://flow-backend-of96.onrender.com/${product.mainImage}`);
       // }
       
       // if (product.additionalImages && product.additionalImages.length > 0) {
       //   setPreviewImages(product.additionalImages.map(img => 
-      //     img.startsWith('http') ? img : `http://localhost:5001/${img}`
+      //     img.startsWith('http') ? img : `https://flow-backend-of96.onrender.com/${img}`
       //   ));
       // } else {
       //   setPreviewImages([]);
@@ -469,7 +469,7 @@ const ProductsAdmin = () => {
     <img 
       src={product.mainImage.startsWith('http') 
         ? product.mainImage 
-        : `http://localhost:5001/uploads/${product.mainImage}`} 
+        : `https://flow-backend-of96.onrender.com/uploads/${product.mainImage}`} 
       alt={product.name} 
       className="w-16 h-16 object-cover rounded"
       onError={(e) => {
@@ -961,7 +961,7 @@ const ProductsAdmin = () => {
     <img 
       src={product.mainImage.startsWith('http') 
         ? product.mainImage 
-        : `http://localhost:5001/uploads/${product.mainImage}`} 
+        : `https://flow-backend-of96.onrender.com/uploads/${product.mainImage}`} 
       alt={product.name} 
       className="w-16 h-16 object-cover rounded"
       onError={(e) => {
